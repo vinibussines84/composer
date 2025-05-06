@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
+use Filament\Panel;
 
 class User extends Authenticatable
 {
@@ -45,4 +46,9 @@ class User extends Authenticatable
         'saldo' => 'decimal:2',
         'bloqueado' => 'decimal:2',
     ];
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true;
+    }
 }
