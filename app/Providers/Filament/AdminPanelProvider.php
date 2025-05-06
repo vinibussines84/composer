@@ -30,6 +30,12 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->authGuard('web')
+            ->authMiddleware([
+                Authenticate::class,
+            ])
+            ->auth(function (\App\Models\User $user) {
+                return $user->dashboard_access === 1;
+            })
             ->colors([
                 'primary' => Color::Green,
             ])
@@ -53,11 +59,7 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->authMiddleware([
-                Authenticate::class,
-            ])
-           
             ->topNavigation()
-            ->maxContentWidth('ExtraLarge');
+            ->maxContentWidth(MaxWidth::ExtraLarge);
     }
 }
