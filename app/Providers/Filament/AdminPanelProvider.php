@@ -11,6 +11,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\MaxWidth;
+use Filament\Navigation\NavigationItem;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -28,14 +29,13 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->default()
             ->id('admin_panel')
+            ->default()
             ->path('push')
             ->login()
             ->brandLogo(asset('theme/img/logopush.png'))
             ->brandLogoHeight('4rem')
             ->registration()
-            ->authGuard('web')
             ->colors([
                 'primary' => Color::Red,
             ])
@@ -49,16 +49,20 @@ class AdminPanelProvider extends PanelProvider
                 AdminStats::class,
                 Ultimas10TransacoesDoUsuario::class,
             ])
+            ->navigationItems([
+                NavigationItem::make()
+                    ->label('Dashboard')
+                    ->url('/dashboard')
+                    ->icon('heroicon-o-home')
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
-                AuthenticateSession::class,
-                ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
-                DisableBladeIconComponents::class,
-                DispatchServingFilamentEvent::class,
+                // DisableBladeIconComponents::class,
+                // DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
