@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Filament\Xota\Widgets;
+namespace App\Filament\Widgets;
 
 use App\Models\User;
 use Filament\Tables;
-use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 
