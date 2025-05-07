@@ -25,9 +25,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Filament::serving(function () {
-            Filament::getPanel('admin_panel')?->auth()->checkAccessUsing(function (User $user) {
-                return $user->dashboard_access === 3;
-            });
+            $panel = Filament::getCurrentPanel();
+
+            if ($panel && $panel->getId() === 'admin_panel') {
+                $panel->auth()->checkAccessUsing(function (User $user) {
+                    return true; // ✅ Permite qualquer usuário autenticado
+                });
+            }
         });
     }
 }
