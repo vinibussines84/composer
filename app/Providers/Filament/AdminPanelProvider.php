@@ -49,12 +49,7 @@ class AdminPanelProvider extends PanelProvider
                 AdminStats::class,
                 Ultimas10TransacoesDoUsuario::class,
             ])
-            ->navigationItems([
-                NavigationItem::make()
-                    ->label('Dashboard')
-                    ->url('/dashboard')
-                    ->icon('heroicon-o-home')
-            ])
+          
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
