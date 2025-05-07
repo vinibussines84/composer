@@ -24,7 +24,7 @@ class PixTransactionResource extends Resource
 
     public static function getPluralModelLabel(): string
     {
-        return 'Extrato';
+        return ' 🧾 Extrato';
     }
 
     public static function table(Table $table): Table

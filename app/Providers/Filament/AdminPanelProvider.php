@@ -12,13 +12,16 @@ use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\MaxWidth;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
-use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+
+// widgets
+use App\Filament\Widgets\AdminStats;
+use App\Filament\Widgets\Ultimas10TransacoesDoUsuario;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -29,9 +32,12 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandLogo(asset('theme/img/logopush.png'))
+            ->brandLogoHeight('4rem')
+            ->registration()
             ->authGuard('web')
             ->colors([
-                'primary' => Color::Green,
+                'primary' => Color::Red,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -40,7 +46,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                \App\Filament\Widgets\AdminStats::class,
+                AdminStats::class,
+                Ultimas10TransacoesDoUsuario::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -56,8 +63,8 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-           
+            ->favicon('theme/img/favicon48.png')
             ->topNavigation()
-            ->maxContentWidth('ExtraLarge');
+            ->maxContentWidth(MaxWidth::Full);
     }
 }

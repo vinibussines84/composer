@@ -25,12 +25,18 @@ class IntegrationResource extends Resource
 
     public static function getPluralModelLabel(): string
     {
-        return 'Chaves de Integrações';
+        return '🔑 Chaves de Integrações';
     }
 
     public static function getNavigationDescription(): ?string
     {
         return 'Utilize essas chaves para se integrar à sua conta via API';
+    }
+
+    public static function canCreate(): bool
+    {
+        // Impede que o botão “Criar” seja exibido
+        return false;
     }
 
     public static function form(Form $form): Form
@@ -55,16 +61,21 @@ class IntegrationResource extends Resource
                     ->copyable()
                     ->tooltip('Clique para copiar a chave completa'),
             ])
+            // Remove ações de linha
             ->actions([])
-            ->bulkActions([]);
+            // Remove ações em massa
+            ->bulkActions([])
+            // Remove o botão “Criar” no cabeçalho
+            ->headerActions([]);
     }
 
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListIntegrations::route('/'),
-            'create' => Pages\CreateIntegration::route('/create'),
-            'edit' => Pages\EditIntegration::route('/{record}/edit'),
+            // criação e edição desabilitadas
+            // 'create' => Pages\CreateIntegration::route('/create'),
+            // 'edit'   => Pages\EditIntegration::route('/{record}/edit'),
         ];
     }
 }

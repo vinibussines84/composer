@@ -24,8 +24,8 @@ class PixWebhookController extends Controller
         $transaction = PixTransaction::where('external_transaction_id', $externalId)->first();
 
         if (! $transaction) {
-            Log::warning('Webhook: Transação não encontrada.', ['external_id' => $externalId]);
-            return response()->json(['error' => 'Transação não encontrada'], 404);
+            Log::warning('Webhook: ID inexistente.', ['external_id' => $externalId]);
+            return response()->json(['error' => 'id inexistente'], 404);
         }
 
         if ($transaction->status !== $newStatus) {
@@ -48,23 +48,23 @@ class PixWebhookController extends Controller
                 $taxa  = $user->taxa_cash_in ?? 0;
 
                 if ($newStatus === 'paid' && $oldStatus !== 'paid') {
-                    $valorLiquido = $valor - ($valor * ($taxa / 100));
-                    $valorCentavos = intval(round($valorLiquido * 100));
+                    $valorLiquido    = $valor - ($valor * ($taxa / 100));
+                    $valorCentavos   = intval(round($valorLiquido * 100));
 
                     $user->increment('saldo', $valorCentavos);
 
                     Log::info('💰 PIX creditado com taxa', [
-                        'valor_bruto' => $valor,
-                        'taxa' => $taxa,
-                        'valor_liquido' => $valorLiquido,
+                        'valor_bruto'            => $valor,
+                        'taxa'                   => $taxa,
+                        'valor_liquido'          => $valorLiquido,
                         'adicionado_em_centavos' => $valorCentavos,
-                        'user_id' => $user->id,
+                        'user_id'                => $user->id,
                     ]);
                 }
 
                 if (
                     in_array($newStatus, ['refunded', 'chargeback', 'in_protest']) &&
-                    !in_array($oldStatus, ['refunded', 'chargeback', 'in_protest'])
+                    ! in_array($oldStatus, ['refunded', 'chargeback', 'in_protest'])
                 ) {
                     $user->decrement('saldo', $transaction->amount);
                     $user->increment('bloqueado', $transaction->amount);
@@ -73,7 +73,7 @@ class PixWebhookController extends Controller
         } else {
             Log::info('Webhook recebido, mas status já estava atualizado.', [
                 'external_id' => $externalId,
-                'status' => $newStatus,
+                'status'      => $newStatus,
             ]);
         }
 

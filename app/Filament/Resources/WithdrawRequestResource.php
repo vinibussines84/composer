@@ -14,13 +14,25 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\IconColumn;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 
 class WithdrawRequestResource extends Resource
 {
     protected static ?string $model = WithdrawRequest::class;
 
-    protected static ?string $navigationLabel = 'Saque';
+    protected static ?string $navigationLabel = 'Saques';
     protected static ?string $navigationIcon = 'heroicon-o-hand-raised';
+
+    public static function getModelLabel(): string
+    {
+        return 'Saque';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '💸 Saques';
+    }
 
     public static function form(Form $form): Form
     {
@@ -31,8 +43,12 @@ class WithdrawRequestResource extends Resource
         return $form
             ->schema([
                 Placeholder::make('saldo_disponivel')
-                    ->label('Saldo disponível')
-                    ->content('R$ ' . number_format($saldoDisponivel, 2, ',', '.')),
+                    ->label('📈 Saldo disponível')
+                    ->content(function () use ($saldoDisponivel) {
+                        $cor = $saldoDisponivel > 0 ? 'green' : 'red';
+                        $valorFormatado = 'R$ ' . number_format($saldoDisponivel, 2, ',', '.');
+                        return new HtmlString("<span style='color: {$cor}; font-weight: bold;'>{$valorFormatado}</span>");
+                    }),
 
                 Select::make('pix_type')
                     ->label('Tipo da chave PIX')
@@ -46,11 +62,11 @@ class WithdrawRequestResource extends Resource
                     ]),
 
                 TextInput::make('pix_key')
-                    ->label('Chave PIX')
+                    ->label('🔑 Chave PIX')
                     ->required(),
 
                 TextInput::make('amount')
-                    ->label('Valor a sacar')
+                    ->label('💰 Valor a sacar')
                     ->prefix('R$')
                     ->numeric()
                     ->reactive()
@@ -70,7 +86,7 @@ class WithdrawRequestResource extends Resource
                         $valor = $get('amount');
                         if (!$valor || $valor <= 0) return 'R$ 0,00';
                         $liquido = $valor - ($valor * ($taxa / 100));
-                        return 'R$ ' . number_format($liquido, 2, ',', '.') . " (descontado taxa de $taxa%)";
+                        return 'R$ ' . number_format($liquido, 2, ',', '.') . " Valor já descontado com a taxa de $taxa%";
                     }),
             ])
             ->columns(2);
@@ -86,8 +102,7 @@ class WithdrawRequestResource extends Resource
                     ->money('BRL'),
 
                 Tables\Columns\TextColumn::make('pix_type')->label('Tipo de chave'),
-
-                Tables\Columns\TextColumn::make('pix_key')->label('Chave PIX'),
+                Tables\Columns\TextColumn::make('pix_key')->label('🔑 Chave PIX'),
 
                 IconColumn::make('status')
                     ->label('Status')
@@ -111,6 +126,12 @@ class WithdrawRequestResource extends Resource
             ->bulkActions([]);
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('user_id', auth()->id());
+    }
+
     public static function getRelations(): array
     {
         return [];
@@ -120,8 +141,6 @@ class WithdrawRequestResource extends Resource
     {
         return [
             'index' => Pages\ListWithdrawRequests::route('/'),
-            //'create' => Pages\CreateWithdrawRequest::route('/create'),
-            //'edit' => Pages\EditWithdrawRequest::route('/{record}/edit'),//
         ];
     }
 }
