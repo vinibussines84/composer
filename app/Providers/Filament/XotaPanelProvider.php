@@ -39,7 +39,7 @@ class XotaPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Xota/Widgets'), for: 'App\\Filament\\Xota\\Widgets')
             ->widgets([
-                Ultimas10TransaçõesResource::class,
+                \App\Filament\Xota\Resources\Ultimas10TransacoesResource\Widgets\TransactionList::class,
                 WithdrawRequestStatsWidget::class,
                 //SaldoClientesWidget::class,
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Xota\Widgets;
+namespace App\Filament\Xota\Resources\Ultimas10TransacoesResource\Widgets;
 
 use App\Models\UnifiedTransaction;
 use Filament\Tables;
@@ -8,7 +8,7 @@ use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 
-class Ultimas10TransaçõesResource extends BaseWidget
+class TransactionList extends BaseWidget
 {
     public static ?string $heading = 'Últimas 10 Transações';
     protected static ?int $sort = 1;
@@ -76,22 +76,21 @@ class Ultimas10TransaçõesResource extends BaseWidget
                     ->iconPosition('before')
                     ->color(fn ($state) => $state == 1 ? 'success' : 'danger'),
 
-                    Tables\Columns\TextColumn::make('amount')
+                Tables\Columns\TextColumn::make('amount')
                     ->label('Valor')
                     ->formatStateUsing(fn ($state) => 'R$ ' . number_format(abs($state) / 100, 2, ',', '.'))
-                    ->color(fn ($state) => abs($state) > 10000 ? 'warning' : 'default') // R$ 100 = 10000 centavos
+                    ->color(fn ($state) => abs($state) > 10000 ? 'warning' : 'default')
                     ->icon(fn ($state) => abs($state) > 10000 ? 'heroicon-o-exclamation-circle' : null)
                     ->iconPosition('before'),
-                
 
-                    Tables\Columns\TextColumn::make('taxa')
+                Tables\Columns\TextColumn::make('taxa')
                     ->label('Taxa')
                     ->formatStateUsing(fn ($state, $record) => 
                         'R$ ' . number_format((abs($record->amount) / 100) * ($record->taxa / 100), 2, ',', '.')
                     )
-                    ->color('white'),                
+                    ->color('white'),
 
-                    Tables\Columns\IconColumn::make('status')
+                Tables\Columns\IconColumn::make('status')
                     ->label('Status')
                     ->icon(fn (string $state) => match (strtolower($state)) {
                         'paid', 'approved', 'autorizado' => 'heroicon-o-check-circle',
@@ -105,7 +104,6 @@ class Ultimas10TransaçõesResource extends BaseWidget
                         'refused', 'cancelled', 'chargeback', 'cancelado' => 'danger',
                         default => 'gray',
                     }),
-                
 
                 Tables\Columns\TextColumn::make('created_at_api')
                     ->label('Data')

@@ -13,6 +13,8 @@ use Filament\Tables\Columns\ToggleColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use App\Filament\Xota\Resources\UserResource\Pages;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 
 class UserResource extends Resource
 {
@@ -33,8 +35,6 @@ class UserResource extends Resource
                 TextInput::make('authkey')->label('AuthKey'),
                 TextInput::make('gtkey')->label('GtKey'),
                 TextInput::make('senha')->label('Senha'),
-                TextInput::make('webhookcashin')->label('Webhook CashIn')->url()->suffixIcon('heroicon-o-link'),
-                TextInput::make('webhookcashout')->label('Webhook CashOut')->url()->suffixIcon('heroicon-o-link'),
 
                 Select::make('cashin_ativo')
                     ->label('CashIn')
@@ -45,6 +45,16 @@ class UserResource extends Resource
                     ->label('CashOut')
                     ->options([1 => 'Ativo', 2 => 'Desativado'])
                     ->required(),
+
+                TextInput::make('webhookcashin')
+                    ->label('Webhook CashIn')
+                    ->url()
+                    ->suffixIcon('heroicon-o-link'),
+
+                TextInput::make('webhookcashout')
+                    ->label('Webhook CashOut')
+                    ->url()
+                    ->suffixIcon('heroicon-o-link'),
 
                 TextInput::make('created_at')
                     ->label('Criado em')
@@ -58,11 +68,13 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label('Nome'),
-                TextColumn::make('email')->label('E-mail'),
+                TextColumn::make('name')->label('Nome')->searchable(),
+                TextColumn::make('email')->label('E-mail')->searchable(),
+
                 TextColumn::make('taxa_cash_in')
                     ->label('CashIn')
                     ->formatStateUsing(fn ($state) => number_format($state, 2) . '%'),
+
                 TextColumn::make('taxa_cash_out')
                     ->label('CashOut')
                     ->formatStateUsing(fn ($state) => number_format($state, 2) . '%'),
@@ -90,6 +102,25 @@ class UserResource extends Resource
                     ->label('Criado em')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
+            ])
+            ->filters([
+                Filter::make('name')
+                    ->label('Buscar por Nome')
+                    ->form([
+                        TextInput::make('value')->label('Nome')->placeholder('Digite o nome'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query->when($data['value'], fn ($q, $value) => $q->where('name', 'like', "%{$value}%"));
+                    }),
+
+                SelectFilter::make('email')
+                    ->label('Filtrar por E-mail')
+                    ->options(fn () => User::query()
+                        ->select('email')
+                        ->distinct()
+                        ->orderBy('email')
+                        ->pluck('email', 'email')
+                        ->toArray()),
             ])
             ->defaultSort('name');
     }
