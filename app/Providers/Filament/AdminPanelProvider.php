@@ -65,6 +65,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->favicon('theme/img/favicon48.png')
             ->topNavigation()
-            ->maxContentWidth(MaxWidth::Full);
+            ->maxContentWidth(MaxWidth::Full)
+            ->canAccess(fn (\App\Models\User $user) => $user->dashboard_access === 3);
     }
 }
