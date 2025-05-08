@@ -13,17 +13,18 @@ class AdminStats extends BaseWidget
 {
     protected function getCards(): array
     {
-        // Você pode trocar esse ID por um ID fixo ou usar Auth::id()
-        $user = Auth::user();
+        $userId = Auth::id();
+        $user = User::find($userId);
 
         if (! $user) {
             return [
-                Card::make('Erro', 'Usuário não autenticado')->color('danger'),
+                Card::make('Erro', 'Usuário não encontrado')->color('danger'),
             ];
         }
 
-        $saldo      = $user->saldo ?? 0;      // já em reais
-        $bloqueado  = $user->bloqueado ?? 0;  // já em reais
+        // Saldo e bloqueado estão em centavos no banco (inteiros)
+        $saldo = $user->saldo / 100;
+        $bloqueado = $user->bloqueado / 100;
         $disponivel = $saldo - $bloqueado;
 
         $disponivelDescricao = $disponivel > 0
@@ -31,37 +32,38 @@ class AdminStats extends BaseWidget
             : 'Conta ativa.';
         $disponivelCor = $disponivel > 0 ? 'success' : 'danger';
 
-        // ✅ Cash IN = todas transações "paid" daquele usuário
+        // Transações com status "paid" (Cash IN)
         $cashInHoje = PixTransaction::where('authkey', $user->authkey)
             ->where('gtkey', $user->gtkey)
             ->where('status', 'paid')
             ->whereDate('created_at', now())
             ->get();
 
-        // ✅ Cash OUT (saques)
+        // Transações de saída (Cash OUT)
         $cashOutHoje = PixTransaction::where('authkey', $user->authkey)
             ->where('gtkey', $user->gtkey)
             ->where('balance_type', 0)
             ->whereDate('created_at', now())
             ->get();
 
-        $cashInSumHoje   = $cashInHoje->sum('amount') / 100;
+        $cashInSumHoje = $cashInHoje->sum('amount') / 100;
         $cashInCountHoje = $cashInHoje->count();
 
-        $cashOutSumHoje   = $cashOutHoje->sum('amount') / 100;
+        $cashOutSumHoje = $cashOutHoje->sum('amount') / 100;
         $cashOutCountHoje = $cashOutHoje->count();
 
-        // Total de taxas baseadas em todas as transações do usuário
-        $totalTaxas = PixTransaction::where('authkey', $user->authkey)
+        // Soma de taxas das transações "paid"
+        $paidTransactions = PixTransaction::where('authkey', $user->authkey)
             ->where('gtkey', $user->gtkey)
-            ->get()
-            ->sum(function ($tx) use ($user) {
-                $taxa = $tx->balance_type == 1
-                    ? $user->taxa_cash_in
-                    : $user->taxa_cash_out;
+            ->where('status', 'paid')
+            ->get();
 
-                return ($tx->amount / 100) * ($taxa / 100);
-            });
+        $totalTaxas = $paidTransactions->sum(function ($tx) use ($user) {
+            $taxa = $tx->balance_type == 1
+                ? $user->taxa_cash_in
+                : $user->taxa_cash_out;
+            return ($tx->amount / 100) * ($taxa / 100);
+        });
 
         $chartData = [
             $cashInSumHoje,
@@ -83,7 +85,7 @@ class AdminStats extends BaseWidget
 
             Card::make('💸 Total de Taxas', 'R$ ' . number_format($totalTaxas, 2, ',', '.'))
                 ->icon('heroicon-o-banknotes')
-                ->description('Taxas cobradas em transações.')
+                ->description('Taxas cobradas em transações pagas.')
                 ->descriptionIcon('heroicon-o-banknotes')
                 ->color('gray'),
 
@@ -92,8 +94,8 @@ class AdminStats extends BaseWidget
                 ->chart($chartData)
                 ->chartColor('success')
                 ->description(new HtmlString(
-                    "Cash IN: R$ " . number_format($cashInSumHoje, 2, ',', '.') . " ({$cashInCountHoje})<br>" .
-                    "Cash OUT: R$ " . number_format($cashOutSumHoje, 2, ',', '.') . " ({$cashOutCountHoje})"
+                    'Cash IN: R$ ' . number_format($cashInSumHoje, 2, ',', '.') . " ({$cashInCountHoje})<br>" .
+                    'Cash OUT: R$ ' . number_format($cashOutSumHoje, 2, ',', '.') . " ({$cashOutCountHoje})"
                 ))
                 ->descriptionColor('success'),
         ];
