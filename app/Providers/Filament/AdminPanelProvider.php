@@ -34,6 +34,8 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->registration()
+            ->passwordReset()
+            ->profile()
             ->plugin(BreezyCore::make())
             ->brandLogo(asset('theme/img/logopush.png'))
             ->brandLogoHeight('4rem')
