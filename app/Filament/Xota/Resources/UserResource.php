@@ -1,25 +1,26 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Xota\Resources;
 
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Resources\Resource;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
-use Filament\Resources\Resource;
+use App\Filament\Xota\Resources\UserResource\Pages;
+use Filament\Tables\Filters\Filter;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-    protected static ?string $navigationIcon = 'heroicon-o-users';  // ícone de menu (opcional)
-    protected static ?string $navigationLabel = 'Usuários';          // rótulo no menu de navegação
-    protected static ?string $modelLabel = 'Usuário';               // rótulo singular do modelo
-    protected static ?string $pluralModelLabel = 'Usuários';        // rótulo plural do modelo
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $navigationLabel = 'Usuários';
+    protected static ?string $navigationGroup = null;
 
     public static function form(Form $form): Form
     {
@@ -28,17 +29,22 @@ class UserResource extends Resource
                 ->label('Nome')
                 ->required()
                 ->maxLength(255),
+
             TextInput::make('email')
                 ->label('E-mail')
                 ->required()
                 ->email(),
+
             Toggle::make('cashin_ativo')
-                ->label('Cashin Ativo')
-                ->inline(false)  // exibe o label acima do toggle (padrão)
+                ->label('CashIn Ativo')
+                ->onColor('success')
+                ->offColor('danger')
                 ->default(true),
+
             Toggle::make('cashout_ativo')
-                ->label('Cashout Ativo')
-                ->inline(false)
+                ->label('CashOut Ativo')
+                ->onColor('success')
+                ->offColor('danger')
                 ->default(true),
         ]);
     }
@@ -49,28 +55,50 @@ class UserResource extends Resource
             ->columns([
                 TextColumn::make('name')
                     ->label('Nome')
-                    ->searchable()   // permite busca por Nome
-                    ->sortable(),    // permite ordenação por Nome
+                    ->searchable()
+                    ->sortable(),
+
                 TextColumn::make('email')
                     ->label('E-mail')
-                    ->searchable()   // permite busca por E-mail
+                    ->searchable()
                     ->sortable(),
+
                 ToggleColumn::make('cashin_ativo')
-                    ->label('Cashin Ativo'),
+                    ->label('CashIn Ativo')
+                    ->sortable()
+                    ->onColor('success')
+                    ->offColor('danger')
+                    ->afterStateUpdated(fn ($record, $state) => $record->save()),
+
                 ToggleColumn::make('cashout_ativo')
-                    ->label('Cashout Ativo'),
+                    ->label('CashOut Ativo')
+                    ->sortable()
+                    ->onColor('success')
+                    ->offColor('danger')
+                    ->afterStateUpdated(fn ($record, $state) => $record->save()),
             ])
             ->filters([
-                // (Opcional) filtros adicionais podem ser configurados aqui
+                Filter::make('buscar')
+                    ->label('Nome ou E-mail')
+                    ->form([
+                        TextInput::make('value')->label('Buscar'),
+                    ])
+                    ->query(fn ($query, array $data) => $query
+                        ->when($data['value'], fn ($q, $value) =>
+                            $q->where(fn ($sub) =>
+                                $sub->where('name', 'like', "%{$value}%")
+                                    ->orWhere('email', 'like', "%{$value}%")
+                            )
+                        )
+                    ),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),     // ação de editar padrão
-                // (Opcional) outras ações customizadas
+                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),  // ação em lote de exclusão
-            ]);
-            // Paginação padrão é automaticamente aplicada pelo Filament
+                Tables\Actions\DeleteBulkAction::make(),
+            ])
+            ->defaultSort('name');
     }
 
     public static function getPages(): array
