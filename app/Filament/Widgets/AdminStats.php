@@ -22,10 +22,14 @@ class AdminStats extends BaseWidget
             ];
         }
 
-        // Saldo e bloqueado estão em centavos no banco (inteiros)
-        $saldo = $user->saldo / 100;
-        $bloqueado = $user->bloqueado / 100;
-        $disponivel = $saldo - $bloqueado;
+        // saldo e bloqueado estão armazenados em centavos (inteiros)
+        $saldoCentavos = (int) $user->saldo;
+        $bloqueadoCentavos = (int) $user->bloqueado;
+        $disponivelCentavos = $saldoCentavos - $bloqueadoCentavos;
+
+        $saldo = $saldoCentavos / 100;
+        $bloqueado = $bloqueadoCentavos / 100;
+        $disponivel = $disponivelCentavos / 100;
 
         $disponivelDescricao = $disponivel > 0
             ? 'Disponível para saque.'
