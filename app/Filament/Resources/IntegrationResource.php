@@ -56,16 +56,12 @@ class IntegrationResource extends Resource
                     ->formatStateUsing(function ($state, $record) {
                         return new HtmlString('
                             <span 
-                                x-data="{ copied: false }" 
-                                x-init="$el.addEventListener(\'click\', async () => {
-                                    await navigator.clipboard.writeText(\'' . e($record->authkey) . '\');
-                                    copied = true;
-                                    setTimeout(() => copied = false, 2000);
-                                })"
+                                x-data="{ show: false }" 
+                                @click="show = !show; navigator.clipboard.writeText(\'' . e($record->authkey) . '\')" 
                                 class="cursor-pointer text-sm text-gray-800 hover:underline"
                             >
-                                <span x-show="!copied">' . substr($record->authkey, 0, 4) . '•••••••• 👁️</span>
-                                <span x-show="copied" class="text-green-600 font-semibold">Copiado!</span>
+                                <span x-show="!show" x-cloak>' . substr($record->authkey, 0, 4) . '•••••••• 👁️</span>
+                                <span x-show="show" x-cloak>' . e($record->authkey) . '</span>
                             </span>
                         ');
                     }),
@@ -76,16 +72,12 @@ class IntegrationResource extends Resource
                     ->formatStateUsing(function ($state, $record) {
                         return new HtmlString('
                             <span 
-                                x-data="{ copied: false }" 
-                                x-init="$el.addEventListener(\'click\', async () => {
-                                    await navigator.clipboard.writeText(\'' . e($record->gtkey) . '\');
-                                    copied = true;
-                                    setTimeout(() => copied = false, 2000);
-                                })"
+                                x-data="{ show: false }" 
+                                @click="show = !show; navigator.clipboard.writeText(\'' . e($record->gtkey) . '\')" 
                                 class="cursor-pointer text-sm text-gray-800 hover:underline"
                             >
-                                <span x-show="!copied">' . substr($record->gtkey, 0, 4) . '•••••••• 👁️</span>
-                                <span x-show="copied" class="text-green-600 font-semibold">Copiado!</span>
+                                <span x-show="!show" x-cloak>' . substr($record->gtkey, 0, 4) . '•••••••• 👁️</span>
+                                <span x-show="show" x-cloak>' . e($record->gtkey) . '</span>
                             </span>
                         ');
                     }),
@@ -94,7 +86,7 @@ class IntegrationResource extends Resource
             ->bulkActions([])
             ->headerActions([])
             ->heading('Chaves de Integração')
-            ->description(new HtmlString('<span class="text-sm text-gray-500">Clique em suas credenciais para copiar.</span>'));
+            ->description(new HtmlString('<span class="text-sm text-gray-500">Clique em suas credenciais para copiar e revelar.</span>'));
     }
 
     public static function getPages(): array
