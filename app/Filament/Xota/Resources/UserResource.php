@@ -12,13 +12,14 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use App\Filament\Xota\Resources\UserResource\Pages;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 
 class UserResource extends Resource
 {
-    protected static ?string $model = \App\Models\User::class;
+    protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     protected static ?string $navigationLabel = 'Usuários';
@@ -33,18 +34,22 @@ class UserResource extends Resource
                 TextInput::make('taxa_cash_in')->label('Taxa CashIn %')->numeric()->inputMode('decimal'),
                 TextInput::make('taxa_cash_out')->label('Taxa CashOut %')->numeric()->inputMode('decimal'),
                 TextInput::make('authkey')->label('AuthKey'),
-                TextInput::make('gtkey')->label('GtKey'),
+                TextInput::make('gtkey')->label('GtKey'), //kk
                 TextInput::make('senha')->label('Senha'),
 
-                Select::make('cashin_ativo')
+                Toggle::make('cashin_ativo')
                     ->label('CashIn')
-                    ->options([1 => 'Ativo', 2 => 'Desativado'])
-                    ->required(),
+                    ->onColor('success')
+                    ->offColor('danger')
+                    ->onIcon('heroicon-o-check')
+                    ->offIcon('heroicon-o-x-mark'),
 
-                Select::make('cashout_ativo')
+                Toggle::make('cashout_ativo')
                     ->label('CashOut')
-                    ->options([1 => 'Ativo', 2 => 'Desativado'])
-                    ->required(),
+                    ->onColor('success')
+                    ->offColor('danger')
+                    ->onIcon('heroicon-o-check')
+                    ->offIcon('heroicon-o-x-mark'),
 
                 TextInput::make('webhookcashin')
                     ->label('Webhook CashIn')
