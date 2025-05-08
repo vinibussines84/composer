@@ -9,6 +9,7 @@ use Filament\Resources\Resource;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use App\Filament\Xota\Resources\UserResource\Pages;
@@ -74,22 +75,26 @@ class UserResource extends Resource
                 TextColumn::make('email')->label('E-mail')->searchable()->sortable(),
 
                 TextColumn::make('taxa_cash_in')
-                    ->label('CashIn')
+                    ->label('Taxa CashIn')
                     ->formatStateUsing(fn ($state) => number_format($state, 2) . '%'),
 
                 TextColumn::make('taxa_cash_out')
-                    ->label('CashOut')
+                    ->label('Taxa CashOut')
                     ->formatStateUsing(fn ($state) => number_format($state, 2) . '%'),
 
-                TextColumn::make('cashin_ativo')
+                ToggleColumn::make('cashin_ativo')
                     ->label('CashIn')
-                    ->formatStateUsing(fn ($state) => $state ? 'Ativo' : 'Desativado')
-                    ->sortable(),
+                    ->onColor('success')
+                    ->offColor('danger')
+                    ->sortable()
+                    ->afterStateUpdated(fn ($record, $state) => $record->save()),
 
-                TextColumn::make('cashout_ativo')
+                ToggleColumn::make('cashout_ativo')
                     ->label('CashOut')
-                    ->formatStateUsing(fn ($state) => $state ? 'Ativo' : 'Desativado')
-                    ->sortable(),
+                    ->onColor('success')
+                    ->offColor('danger')
+                    ->sortable()
+                    ->afterStateUpdated(fn ($record, $state) => $record->save()),
 
                 TextColumn::make('webhookcashin')->label('Webhook CashIn')->limit(30)->toggleable(),
                 TextColumn::make('webhookcashout')->label('Webhook CashOut')->limit(30)->toggleable(),
