@@ -1,138 +1,84 @@
 <?php
 
-namespace App\Filament\Xota\Resources;
+namespace App\Filament\Resources;
 
 use App\Models\User;
 use Filament\Forms;
-use Filament\Tables;
-use Filament\Resources\Resource;
 use Filament\Forms\Form;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use App\Filament\Xota\Resources\UserResource\Pages;
-use Filament\Tables\Filters\Filter;
+use Filament\Resources\Resource;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
-    protected static ?string $navigationLabel = 'Usuários';
-    protected static ?string $navigationGroup = null;
+    protected static ?string $navigationIcon = 'heroicon-o-users';  // ícone de menu (opcional)
+    protected static ?string $navigationLabel = 'Usuários';          // rótulo no menu de navegação
+    protected static ?string $modelLabel = 'Usuário';               // rótulo singular do modelo
+    protected static ?string $pluralModelLabel = 'Usuários';        // rótulo plural do modelo
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                TextInput::make('name')->label('Nome')->required(),
-                TextInput::make('email')->label('E-mail')->email()->required(),
-                TextInput::make('taxa_cash_in')->label('Taxa CashIn %')->numeric()->inputMode('decimal'),
-                TextInput::make('taxa_cash_out')->label('Taxa CashOut %')->numeric()->inputMode('decimal'),
-                TextInput::make('authkey')->label('AuthKey'),
-                TextInput::make('gtkey')->label('GtKey'),
-                TextInput::make('senha')->label('Senha'),
-
-                Toggle::make('cashin_ativo')
-                    ->label('CashIn')
-                    ->onColor('success')
-                    ->offColor('danger')
-                    ->onIcon('heroicon-o-check')
-                    ->offIcon('heroicon-o-x-mark'),
-
-                Toggle::make('cashout_ativo')
-                    ->label('CashOut')
-                    ->onColor('success')
-                    ->offColor('danger')
-                    ->onIcon('heroicon-o-check')
-                    ->offIcon('heroicon-o-x-mark'),
-
-                TextInput::make('webhookcashin')
-                    ->label('Webhook CashIn')
-                    ->url()
-                    ->suffixIcon('heroicon-o-link'),
-
-                TextInput::make('webhookcashout')
-                    ->label('Webhook CashOut')
-                    ->url()
-                    ->suffixIcon('heroicon-o-link'),
-
-                TextInput::make('created_at')
-                    ->label('Criado em')
-                    ->disabled()
-                    ->formatStateUsing(fn ($state) => \Carbon\Carbon::parse($state)->format('d/m/Y H:i')),
-            ])
-            ->columns(2);
+        return $form->schema([
+            TextInput::make('name')
+                ->label('Nome')
+                ->required()
+                ->maxLength(255),
+            TextInput::make('email')
+                ->label('E-mail')
+                ->required()
+                ->email(),
+            Toggle::make('cashin_ativo')
+                ->label('Cashin Ativo')
+                ->inline(false)  // exibe o label acima do toggle (padrão)
+                ->default(true),
+            Toggle::make('cashout_ativo')
+                ->label('Cashout Ativo')
+                ->inline(false)
+                ->default(true),
+        ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label('Nome')->searchable(),
-                TextColumn::make('email')->label('E-mail')->searchable(),
-
-                TextColumn::make('taxa_cash_in')
-                    ->label('CashIn')
-                    ->formatStateUsing(fn ($state) => number_format($state, 2) . '%'),
-
-                TextColumn::make('taxa_cash_out')
-                    ->label('CashOut')
-                    ->formatStateUsing(fn ($state) => number_format($state, 2) . '%'),
-
-                ToggleColumn::make('cashin_ativo')
-                    ->label('CashIn')
-                    ->onIcon('heroicon-o-check-circle')
-                    ->offIcon('heroicon-o-x-circle')
-                    ->onColor('success')
-                    ->offColor('danger')
-                    ->sortable()
-                    ->afterStateUpdated(fn ($record, $state) => $record->save()),
-
-                ToggleColumn::make('cashout_ativo')
-                    ->label('CashOut')
-                    ->onIcon('heroicon-o-check-circle')
-                    ->offIcon('heroicon-o-x-circle')
-                    ->onColor('success')
-                    ->offColor('danger')
-                    ->sortable()
-                    ->afterStateUpdated(fn ($record, $state) => $record->save()),
-
-                TextColumn::make('webhookcashin')->label('Webhook CashIn')->limit(30)->toggleable(),
-                TextColumn::make('webhookcashout')->label('Webhook CashOut')->limit(30)->toggleable(),
-
-                TextColumn::make('created_at')
-                    ->label('Criado em')
-                    ->dateTime('d/m/Y H:i')
+                TextColumn::make('name')
+                    ->label('Nome')
+                    ->searchable()   // permite busca por Nome
+                    ->sortable(),    // permite ordenação por Nome
+                TextColumn::make('email')
+                    ->label('E-mail')
+                    ->searchable()   // permite busca por E-mail
                     ->sortable(),
+                ToggleColumn::make('cashin_ativo')
+                    ->label('Cashin Ativo'),
+                ToggleColumn::make('cashout_ativo')
+                    ->label('Cashout Ativo'),
             ])
             ->filters([
-                Filter::make('search')
-                    ->label('Buscar por Nome ou E-mail')
-                    ->form([
-                        TextInput::make('value')->label('Buscar')->placeholder('Nome ou E-mail'),
-                    ])
-                    ->query(function ($query, array $data) {
-                        return $query->when($data['value'], fn ($q, $value) =>
-                            $q->where(function ($subQuery) use ($value) {
-                                $subQuery
-                                    ->where('name', 'like', "%{$value}%")
-                                    ->orWhere('email', 'like', "%{$value}%");
-                            })
-                        );
-                    }),
+                // (Opcional) filtros adicionais podem ser configurados aqui
             ])
-            ->defaultSort('name');
+            ->actions([
+                Tables\Actions\EditAction::make(),     // ação de editar padrão
+                // (Opcional) outras ações customizadas
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),  // ação em lote de exclusão
+            ]);
+            // Paginação padrão é automaticamente aplicada pelo Filament
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUsers::route('/'),
+            'index'  => Pages\ListUsers::route('/'),
             'create' => Pages\CreateUser::route('/create'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            'edit'   => Pages\EditUser::route('/{record}/edit'),
         ];
     }
 }
