@@ -8,7 +8,6 @@ use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Card;
 use Illuminate\Support\HtmlString;
-use Illuminate\Support\Facades\DB;
 
 class WithdrawRequestStatsWidget extends BaseWidget
 {
@@ -21,31 +20,55 @@ class WithdrawRequestStatsWidget extends BaseWidget
         $fimSemana = $hoje->copy()->endOfWeek();
         $mesAtual = $hoje->translatedFormat('F Y');
 
-        // PIX (saques autorizados)
-        $pixHoje = WithdrawRequest::whereDate('created_at', $hoje)
-                        ->where('status', 'autorizado')
-                        ->count();
-        $pixSemana = WithdrawRequest::whereBetween('created_at', [$inicioSemana, $fimSemana])
-                        ->where('status', 'autorizado')
-                        ->count();
-        $pixMes = WithdrawRequest::whereMonth('created_at', $hoje->month)
-                        ->whereYear('created_at', $hoje->year)
-                        ->where('status', 'autorizado')
-                        ->count();
+        // PIX HOJE = entradas pagas + saques autorizados
+        $pixHojeIn = PixTransaction::whereDate('created_at', $hoje)
+            ->where('status', 'paid')
+            ->where('balance_type', 1)
+            ->sum('amount');
+
+        $pixHojeOut = WithdrawRequest::whereDate('created_at', $hoje)
+            ->where('status', 'autorizado')
+            ->sum('amount');
+
+        $pixHoje = ($pixHojeIn + $pixHojeOut) / 100;
+
+        // PIX SEMANA
+        $pixSemanaIn = PixTransaction::whereBetween('created_at', [$inicioSemana, $fimSemana])
+            ->where('status', 'paid')
+            ->where('balance_type', 1)
+            ->sum('amount');
+
+        $pixSemanaOut = WithdrawRequest::whereBetween('created_at', [$inicioSemana, $fimSemana])
+            ->where('status', 'autorizado')
+            ->sum('amount');
+
+        $pixSemana = ($pixSemanaIn + $pixSemanaOut) / 100;
+
+        // PIX MÊS
+        $pixMesIn = PixTransaction::whereMonth('created_at', $hoje->month)
+            ->whereYear('created_at', $hoje->year)
+            ->where('status', 'paid')
+            ->where('balance_type', 1)
+            ->sum('amount');
+
+        $pixMesOut = WithdrawRequest::whereMonth('created_at', $hoje->month)
+            ->whereYear('created_at', $hoje->year)
+            ->where('status', 'autorizado')
+            ->sum('amount');
+
+        $pixMes = ($pixMesIn + $pixMesOut) / 100;
 
         // Cash OUT do dia
-        $cashOutSumHoje = WithdrawRequest::whereDate('created_at', $hoje)
-                                ->where('status', 'autorizado')
-                                ->sum('amount') / 100;
+        $cashOutSumHoje = $pixHojeOut / 100;
         $cashOutCountHoje = WithdrawRequest::whereDate('created_at', $hoje)
-                                ->where('status', 'autorizado')
-                                ->count();
+            ->where('status', 'autorizado')
+            ->count();
 
         // Cash IN do dia
         $cashInCollection = PixTransaction::whereDate('created_at', $hoje)
-                                ->where('status', 'paid')
-                                ->where('balance_type', 1)
-                                ->get();
+            ->where('status', 'paid')
+            ->where('balance_type', 1)
+            ->get();
         $cashInTotal = $cashInCollection->sum('amount') / 100;
         $cashInCount = $cashInCollection->count();
 
@@ -81,22 +104,22 @@ class WithdrawRequestStatsWidget extends BaseWidget
 
         // Cor do card baseada no saldo líquido
         $netTotal = $cashInTotal - $cashOutSumHoje;
-        $cardColor = $netTotal >= 0 ? 'success' : 'success';
+        $cardColor = $netTotal >= 0 ? 'success' : 'danger';
 
         $cards = [];
 
-        $cards[] = Card::make('PIX HOJE', (string) $pixHoje)
+        $cards[] = Card::make('PIX HOJE', 'R$ ' . number_format($pixHoje, 2, ',', '.'))
             ->description($hoje->format('d/m/Y'))
             ->icon('heroicon-o-calendar')
             ->descriptionIcon('heroicon-o-check-circle')
             ->color('warning');
 
-        $cards[] = Card::make('PIX SEMANA', (string) $pixSemana)
+        $cards[] = Card::make('PIX SEMANA', 'R$ ' . number_format($pixSemana, 2, ',', '.'))
             ->description($inicioSemana->format('d/m') . ' a ' . $fimSemana->format('d/m'))
             ->icon('heroicon-o-calendar')
             ->color('primary');
 
-        $cards[] = Card::make('PIX MÊS', (string) $pixMes)
+        $cards[] = Card::make('PIX MÊS', 'R$ ' . number_format($pixMes, 2, ',', '.'))
             ->description($mesAtual)
             ->icon('heroicon-o-calendar-days')
             ->color('success');
