@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 use Filament\Facades\Filament;
 use App\Models\User;
 
@@ -24,6 +25,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // 👇 Força HTTPS em produção
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         Filament::serving(function () {
             $panel = Filament::getCurrentPanel();
 
