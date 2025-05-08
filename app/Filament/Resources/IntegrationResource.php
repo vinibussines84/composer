@@ -52,13 +52,25 @@ class IntegrationResource extends Resource
             ->columns([
                 TextColumn::make('authkey')
                     ->label('Auth Key')
+                    ->html()
                     ->copyable()
-                    ->copyableState(fn ($record) => $record->authkey),
+                    ->copyableState(fn ($record) => $record->authkey)
+                    ->formatStateUsing(fn ($state) => new HtmlString(
+                        '<div class="px-3 py-1 border border-red-500 rounded-md inline-block text-sm font-mono bg-red-50 text-red-600 shadow-sm">'
+                        . e($state) .
+                        '</div>'
+                    )),
 
                 TextColumn::make('gtkey')
                     ->label('G Key')
+                    ->html()
                     ->copyable()
-                    ->copyableState(fn ($record) => $record->gtkey),
+                    ->copyableState(fn ($record) => $record->gtkey)
+                    ->formatStateUsing(fn ($state) => new HtmlString(
+                        '<div class="px-3 py-1 border border-red-500 rounded-md inline-block text-sm font-mono bg-red-50 text-red-600 shadow-sm">'
+                        . e($state) .
+                        '</div>'
+                    )),
             ])
             ->actions([])
             ->bulkActions([])
