@@ -14,45 +14,36 @@ class AdminStats extends BaseWidget
     {
         $user = Auth::user();
 
-        // ❗️ Os valores já estão em reais
-        $saldo      = $user->saldo     ?? 0;
-        $bloqueado  = $user->bloqueado ?? 0;
+        $saldo      = ($user->saldo    ?? 0) / 100;
+        $bloqueado  = ($user->bloqueado ?? 0) / 100;
         $disponivel = $saldo - $bloqueado;
 
         $disponivelDescricao = $disponivel > 0
             ? 'Disponível para saque.'
-            : 'Conta ativa.';
+            : 'Conta Ativa.';
         $disponivelCor = $disponivel > 0 ? 'success' : 'danger';
 
-        // 🔒 Apenas transações pagas e com balance_type = 1 contam como Cash IN
-        $cashInHoje = PixTransaction::where('authkey', $user->authkey)
-            ->where('gtkey', $user->gtkey)
+        $cashInHoje = PixTransaction::where('user_id', $user->id)
             ->where('balance_type', 1)
-            ->where('status', 'paid')
             ->whereDate('created_at', now())
             ->get();
-
-        $cashOutHoje = PixTransaction::where('authkey', $user->authkey)
-            ->where('gtkey', $user->gtkey)
+        $cashOutHoje = PixTransaction::where('user_id', $user->id)
             ->where('balance_type', 0)
             ->whereDate('created_at', now())
             ->get();
 
-        $cashInSumHoje   = $cashInHoje->sum('amount') / 100;
+        $cashInSumHoje   = $cashInHoje->sum('amount')   / 100;
         $cashInCountHoje = $cashInHoje->count();
 
         $cashOutSumHoje   = $cashOutHoje->sum('amount') / 100;
         $cashOutCountHoje = $cashOutHoje->count();
 
-        // 💸 Soma total das taxas aplicadas nas transações do usuário
-        $totalTaxas = PixTransaction::where('authkey', $user->authkey)
-            ->where('gtkey', $user->gtkey)
+        $totalTaxas = PixTransaction::where('user_id', $user->id)
             ->get()
             ->sum(function ($tx) use ($user) {
                 $taxa = $tx->balance_type == 1
                     ? $user->taxa_cash_in
                     : $user->taxa_cash_out;
-
                 return ($tx->amount / 100) * ($taxa / 100);
             });
 
