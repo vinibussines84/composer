@@ -52,17 +52,43 @@ class IntegrationResource extends Resource
             ->columns([
                 TextColumn::make('authkey')
                     ->label('Auth Key')
-                    ->formatStateUsing(fn ($state) => substr($state, 0, 4) . '•••••••• 👁️')
-                    ->tooltip('Clique para copiar a chave completa')
-                    ->copyable()
-                    ->copyableState(fn ($record) => $record->authkey),
+                    ->html()
+                    ->formatStateUsing(function ($state, $record) {
+                        return new HtmlString('
+                            <span 
+                                x-data="{ copied: false }" 
+                                x-init="$el.addEventListener(\'click\', async () => {
+                                    await navigator.clipboard.writeText(\'' . e($record->authkey) . '\');
+                                    copied = true;
+                                    setTimeout(() => copied = false, 2000);
+                                })"
+                                class="cursor-pointer text-sm text-gray-800 hover:underline"
+                            >
+                                <span x-show="!copied">' . substr($record->authkey, 0, 4) . '•••••••• 👁️</span>
+                                <span x-show="copied" class="text-green-600 font-semibold">Copiado!</span>
+                            </span>
+                        ');
+                    }),
 
                 TextColumn::make('gtkey')
                     ->label('G Key')
-                    ->formatStateUsing(fn ($state) => substr($state, 0, 4) . '•••••••• 👁️')
-                    ->tooltip('Clique para copiar a chave completa')
-                    ->copyable()
-                    ->copyableState(fn ($record) => $record->gtkey),
+                    ->html()
+                    ->formatStateUsing(function ($state, $record) {
+                        return new HtmlString('
+                            <span 
+                                x-data="{ copied: false }" 
+                                x-init="$el.addEventListener(\'click\', async () => {
+                                    await navigator.clipboard.writeText(\'' . e($record->gtkey) . '\');
+                                    copied = true;
+                                    setTimeout(() => copied = false, 2000);
+                                })"
+                                class="cursor-pointer text-sm text-gray-800 hover:underline"
+                            >
+                                <span x-show="!copied">' . substr($record->gtkey, 0, 4) . '•••••••• 👁️</span>
+                                <span x-show="copied" class="text-green-600 font-semibold">Copiado!</span>
+                            </span>
+                        ');
+                    }),
             ])
             ->actions([])
             ->bulkActions([])
