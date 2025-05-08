@@ -3,47 +3,63 @@
 namespace App\Filament\Widgets;
 
 use App\Models\PixTransaction;
+use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Card;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Facades\Auth;
 
 class AdminStats extends BaseWidget
 {
     protected function getCards(): array
     {
+        // Você pode trocar esse ID por um ID fixo ou usar Auth::id()
         $user = Auth::user();
 
-        $saldo      = ($user->saldo    ?? 0) / 100;
-        $bloqueado  = ($user->bloqueado ?? 0) / 100;
+        if (! $user) {
+            return [
+                Card::make('Erro', 'Usuário não autenticado')->color('danger'),
+            ];
+        }
+
+        $saldo      = $user->saldo ?? 0;      // já em reais
+        $bloqueado  = $user->bloqueado ?? 0;  // já em reais
         $disponivel = $saldo - $bloqueado;
 
         $disponivelDescricao = $disponivel > 0
             ? 'Disponível para saque.'
-            : 'Conta Ativa.';
+            : 'Conta ativa.';
         $disponivelCor = $disponivel > 0 ? 'success' : 'danger';
 
-        $cashInHoje = PixTransaction::where('user_id', $user->id)
-            ->where('balance_type', 1)
+        // ✅ Cash IN = todas transações "paid" daquele usuário
+        $cashInHoje = PixTransaction::where('authkey', $user->authkey)
+            ->where('gtkey', $user->gtkey)
+            ->where('status', 'paid')
             ->whereDate('created_at', now())
             ->get();
-        $cashOutHoje = PixTransaction::where('user_id', $user->id)
+
+        // ✅ Cash OUT (saques)
+        $cashOutHoje = PixTransaction::where('authkey', $user->authkey)
+            ->where('gtkey', $user->gtkey)
             ->where('balance_type', 0)
             ->whereDate('created_at', now())
             ->get();
 
-        $cashInSumHoje   = $cashInHoje->sum('amount')   / 100;
+        $cashInSumHoje   = $cashInHoje->sum('amount') / 100;
         $cashInCountHoje = $cashInHoje->count();
 
         $cashOutSumHoje   = $cashOutHoje->sum('amount') / 100;
         $cashOutCountHoje = $cashOutHoje->count();
 
-        $totalTaxas = PixTransaction::where('user_id', $user->id)
+        // Total de taxas baseadas em todas as transações do usuário
+        $totalTaxas = PixTransaction::where('authkey', $user->authkey)
+            ->where('gtkey', $user->gtkey)
             ->get()
             ->sum(function ($tx) use ($user) {
                 $taxa = $tx->balance_type == 1
                     ? $user->taxa_cash_in
                     : $user->taxa_cash_out;
+
                 return ($tx->amount / 100) * ($taxa / 100);
             });
 
@@ -76,12 +92,8 @@ class AdminStats extends BaseWidget
                 ->chart($chartData)
                 ->chartColor('success')
                 ->description(new HtmlString(
-                    "Cash IN: R$ " 
-                        . number_format($cashInSumHoje, 2, ',', '.') 
-                        . " ({$cashInCountHoje})<br>" .
-                    "Cash OUT: R$ " 
-                        . number_format($cashOutSumHoje, 2, ',', '.') 
-                        . " ({$cashOutCountHoje})"
+                    "Cash IN: R$ " . number_format($cashInSumHoje, 2, ',', '.') . " ({$cashInCountHoje})<br>" .
+                    "Cash OUT: R$ " . number_format($cashOutSumHoje, 2, ',', '.') . " ({$cashOutCountHoje})"
                 ))
                 ->descriptionColor('success'),
         ];
