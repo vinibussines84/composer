@@ -23,6 +23,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 // widgets
 use App\Filament\Widgets\AdminStats;
 use App\Filament\Widgets\Ultimas10TransacoesDoUsuario;
+use App\Models\User;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -49,19 +50,17 @@ class AdminPanelProvider extends PanelProvider
                 AdminStats::class,
                 Ultimas10TransacoesDoUsuario::class,
             ])
-          
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
-                // DisableBladeIconComponents::class,
-                // DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
             ])
+            ->authorization(fn (User $user) => $user->canAccessPanel($panel))
             ->favicon('theme/img/favicon48.png')
             ->topNavigation()
             ->maxContentWidth(MaxWidth::Full);
