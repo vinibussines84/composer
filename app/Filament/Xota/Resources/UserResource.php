@@ -11,7 +11,6 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use App\Filament\Xota\Resources\UserResource\Pages;
 use Filament\Tables\Filters\Filter;
@@ -34,7 +33,7 @@ class UserResource extends Resource
                 TextInput::make('taxa_cash_in')->label('Taxa CashIn %')->numeric()->inputMode('decimal'),
                 TextInput::make('taxa_cash_out')->label('Taxa CashOut %')->numeric()->inputMode('decimal'),
                 TextInput::make('authkey')->label('AuthKey'),
-                TextInput::make('gtkey')->label('GtKey'), //kk
+                TextInput::make('gtkey')->label('GtKey'),
                 TextInput::make('senha')->label('Senha'),
 
                 Toggle::make('cashin_ativo')
@@ -90,7 +89,10 @@ class UserResource extends Resource
                     ->offIcon('heroicon-o-x-circle')
                     ->onColor('success')
                     ->offColor('danger')
-                    ->alignRight(),
+                    ->sortable()
+                    ->afterStateUpdated(function ($record, $state) {
+                        // Aqui você pode disparar eventos ou notificações, se quiser.
+                    }),
 
                 ToggleColumn::make('cashout_ativo')
                     ->label('CashOut')
@@ -98,7 +100,10 @@ class UserResource extends Resource
                     ->offIcon('heroicon-o-x-circle')
                     ->onColor('success')
                     ->offColor('danger')
-                    ->alignRight(),
+                    ->sortable()
+                    ->afterStateUpdated(function ($record, $state) {
+                        // Aqui você pode disparar eventos ou notificações, se quiser.
+                    }),
 
                 TextColumn::make('webhookcashin')->label('Webhook CashIn')->limit(30)->toggleable(),
                 TextColumn::make('webhookcashout')->label('Webhook CashOut')->limit(30)->toggleable(),
