@@ -14,8 +14,9 @@ class AdminStats extends BaseWidget
     {
         $user = Auth::user();
 
-        $saldo      = ($user->saldo     ?? 0) / 100;
-        $bloqueado  = ($user->bloqueado ?? 0) / 100;
+        // ❗️ Os valores já estão em reais
+        $saldo      = $user->saldo     ?? 0;
+        $bloqueado  = $user->bloqueado ?? 0;
         $disponivel = $saldo - $bloqueado;
 
         $disponivelDescricao = $disponivel > 0
@@ -23,10 +24,11 @@ class AdminStats extends BaseWidget
             : 'Conta ativa.';
         $disponivelCor = $disponivel > 0 ? 'success' : 'danger';
 
-        // Busca transações do dia por authkey e gtkey
+        // 🔒 Apenas transações pagas e com balance_type = 1 contam como Cash IN
         $cashInHoje = PixTransaction::where('authkey', $user->authkey)
             ->where('gtkey', $user->gtkey)
             ->where('balance_type', 1)
+            ->where('status', 'paid')
             ->whereDate('created_at', now())
             ->get();
 
@@ -42,7 +44,7 @@ class AdminStats extends BaseWidget
         $cashOutSumHoje   = $cashOutHoje->sum('amount') / 100;
         $cashOutCountHoje = $cashOutHoje->count();
 
-        // Soma total de taxas baseado em todas as transações do usuário
+        // 💸 Soma total das taxas aplicadas nas transações do usuário
         $totalTaxas = PixTransaction::where('authkey', $user->authkey)
             ->where('gtkey', $user->gtkey)
             ->get()
@@ -50,6 +52,7 @@ class AdminStats extends BaseWidget
                 $taxa = $tx->balance_type == 1
                     ? $user->taxa_cash_in
                     : $user->taxa_cash_out;
+
                 return ($tx->amount / 100) * ($taxa / 100);
             });
 
