@@ -14,7 +14,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use App\Filament\Xota\Resources\UserResource\Pages;
 use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
 
 class UserResource extends Resource
 {
@@ -90,9 +89,7 @@ class UserResource extends Resource
                     ->onColor('success')
                     ->offColor('danger')
                     ->sortable()
-                    ->afterStateUpdated(function ($record, $state) {
-                        // Aqui você pode disparar eventos ou notificações, se quiser.
-                    }),
+                    ->afterStateUpdated(fn ($record, $state) => $record->save()),
 
                 ToggleColumn::make('cashout_ativo')
                     ->label('CashOut')
@@ -101,9 +98,7 @@ class UserResource extends Resource
                     ->onColor('success')
                     ->offColor('danger')
                     ->sortable()
-                    ->afterStateUpdated(function ($record, $state) {
-                        // Aqui você pode disparar eventos ou notificações, se quiser.
-                    }),
+                    ->afterStateUpdated(fn ($record, $state) => $record->save()),
 
                 TextColumn::make('webhookcashin')->label('Webhook CashIn')->limit(30)->toggleable(),
                 TextColumn::make('webhookcashout')->label('Webhook CashOut')->limit(30)->toggleable(),
@@ -114,23 +109,20 @@ class UserResource extends Resource
                     ->sortable(),
             ])
             ->filters([
-                Filter::make('name')
-                    ->label('Buscar por Nome')
+                Filter::make('search')
+                    ->label('Buscar por Nome ou E-mail')
                     ->form([
-                        TextInput::make('value')->label('Nome')->placeholder('Digite o nome'),
+                        TextInput::make('value')->label('Buscar')->placeholder('Nome ou E-mail'),
                     ])
                     ->query(function ($query, array $data) {
-                        return $query->when($data['value'], fn ($q, $value) => $q->where('name', 'like', "%{$value}%"));
+                        return $query->when($data['value'], fn ($q, $value) =>
+                            $q->where(function ($subQuery) use ($value) {
+                                $subQuery
+                                    ->where('name', 'like', "%{$value}%")
+                                    ->orWhere('email', 'like', "%{$value}%");
+                            })
+                        );
                     }),
-
-                SelectFilter::make('email')
-                    ->label('Filtrar por E-mail')
-                    ->options(fn () => User::query()
-                        ->select('email')
-                        ->distinct()
-                        ->orderBy('email')
-                        ->pluck('email', 'email')
-                        ->toArray()),
             ])
             ->defaultSort('name');
     }
