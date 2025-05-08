@@ -27,19 +27,57 @@ class CheckPixStatus extends Command
                 continue;
             }
 
-            $status = $response['status'] ?? null;
+            $newStatus = $response['status'] ?? null;
 
-            if ($status && $status !== $transaction->status) {
-                $request = new \Illuminate\Http\Request([
-                    'id' => $transaction->external_transaction_id,
-                    'status' => $status,
-                ]);
-
-                // Chama o controller diretamente
-                app(\App\Http\Controllers\Api\PixWebhookController::class)->handle($request);
-
-                $this->info("Transação {$transaction->id} atualizada para {$status}");
+            if (! $newStatus || $newStatus === $transaction->status) {
+                continue;
             }
+
+            $oldStatus = $transaction->status;
+            $transaction->update(['status' => $newStatus]);
+
+            Log::info('Status da transação atualizado via comando.', [
+                'external_id' => $transaction->external_transaction_id,
+                'de' => $oldStatus,
+                'para' => $newStatus,
+            ]);
+
+            $user = $transaction->user;
+
+            if (! $user) {
+                Log::warning('Usuário não encontrado para transação.', [
+                    'transaction_id' => $transaction->id,
+                ]);
+                continue;
+            }
+
+            $valor = $transaction->amount / 100; // valor em reais
+            $taxa  = $user->taxa_cash_in ?? 0;
+
+            if ($newStatus === 'paid' && $oldStatus !== 'paid') {
+                $valorLiquido    = $valor - ($valor * ($taxa / 100));
+                $valorCentavos   = intval(round($valorLiquido * 100));
+
+                $user->increment('saldo', $valorCentavos);
+
+                Log::info('💰 PIX creditado com taxa', [
+                    'valor_bruto'            => $valor,
+                    'taxa'                   => $taxa,
+                    'valor_liquido'          => $valorLiquido,
+                    'adicionado_em_centavos' => $valorCentavos,
+                    'user_id'                => $user->id,
+                ]);
+            }
+
+            if (
+                in_array($newStatus, ['refunded', 'chargeback', 'in_protest']) &&
+                ! in_array($oldStatus, ['refunded', 'chargeback', 'in_protest'])
+            ) {
+                $user->decrement('saldo', $transaction->amount);
+                $user->increment('bloqueado', $transaction->amount);
+            }
+
+            $this->info("Transação {$transaction->id} atualizada para {$newStatus}");
         }
     }
 }
