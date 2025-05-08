@@ -18,7 +18,6 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
-        'dashboard_access',
         'taxa_cash_in',
         'taxa_cash_out',
         'authkey',
@@ -50,6 +49,6 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->dashboard_access === 3;
+        return true;
     }
 }
