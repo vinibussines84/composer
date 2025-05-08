@@ -11,14 +11,16 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\MaxWidth;
-use Filament\Navigation\NavigationItem;
-use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+
+use Jeffgreco13\FilamentBreezy\BreezyCore;
+use Awcodes\LightSwitch\LightSwitchPlugin;
+use Awcodes\LightSwitch\Enums\Alignment;
 
 // widgets
 use App\Filament\Widgets\AdminStats;
@@ -36,7 +38,10 @@ class AdminPanelProvider extends PanelProvider
             ->registration()
             ->passwordReset()
             ->profile()
-            ->plugin(BreezyCore::make())
+            ->plugins([
+                BreezyCore::make(),
+                LightSwitchPlugin::make()->position(Alignment::BottomCenter),
+            ])
             ->brandLogo(asset('theme/img/logopush.png'))
             ->brandLogoHeight('4rem')
             ->colors([
@@ -45,12 +50,12 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class, //
+                Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 AdminStats::class,
-                Ultimas10TransacoesDoUsuario::class, //s
+                Ultimas10TransacoesDoUsuario::class,
             ])
             ->middleware([
                 EncryptCookies::class,
