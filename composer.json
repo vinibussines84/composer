@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "awcodes/light-switch": "^1.0",
+        "coderflex/filament-turnstile": "^2.3",
         "eightynine/filament-advanced-widgets": "^3.0",
         "filament/filament": "^3.3",
         "illuminate/view": "*",
