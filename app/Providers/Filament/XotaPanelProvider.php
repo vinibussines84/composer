@@ -23,6 +23,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Xota\Widgets\SaldoClientesWidget;
 use App\Filament\Xota\Widgets\WithdrawRequestStatsWidget;
 use App\Filament\Xota\Resources\Ultimas10TransacoesResource\Widgets\TransactionList;
+use App\Http\Middleware\CheckXotaAccess;
 
 class XotaPanelProvider extends PanelProvider
 {
@@ -34,12 +35,21 @@ class XotaPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->discoverResources(in: app_path('Filament/Xota/Resources'), for: 'App\\Filament\\Xota\\Resources')
-            ->discoverPages(in: app_path('Filament/Xota/Pages'), for: 'App\\Filament\\Xota\\Pages')
+            ->discoverResources(
+                in: app_path('Filament/Xota/Resources'),
+                for: 'App\\Filament\\Xota\\Resources'
+            )
+            ->discoverPages(
+                in: app_path('Filament/Xota/Pages'),
+                for: 'App\\Filament\\Xota\\Pages'
+            )
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Xota/Widgets'), for: 'App\\Filament\\Xota\\Widgets')
+            ->discoverWidgets(
+                in: app_path('Filament/Xota/Widgets'),
+                for: 'App\\Filament\\Xota\\Widgets'
+            )
             ->widgets([
                 TransactionList::class,
                 WithdrawRequestStatsWidget::class,
@@ -58,7 +68,7 @@ class XotaPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-                'check.xota',
+                CheckXotaAccess::class,
             ])
             ->maxContentWidth('ExtraLarge');
     }

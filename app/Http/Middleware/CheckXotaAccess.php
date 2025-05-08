@@ -10,7 +10,7 @@ class CheckXotaAccess
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check() && auth()->user()->dashboard_access == 3) {
+        if (auth()->check() && auth()->user()->dashrash) {
             return $next($request);
         }
 

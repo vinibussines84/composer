@@ -29,6 +29,7 @@ class User extends Authenticatable implements FilamentUser
         'webhookcashout',
         'saldo',
         'bloqueado',
+        'dashrash', // novo campo
     ];
 
     protected $hidden = [
@@ -43,12 +44,17 @@ class User extends Authenticatable implements FilamentUser
         'password' => 'hashed',
         'cashin_ativo' => 'boolean',
         'cashout_ativo' => 'boolean',
+        'dashrash' => 'boolean',
         'saldo' => 'decimal:2',
         'bloqueado' => 'decimal:2',
     ];
 
     public function canAccessPanel(Panel $panel): bool
     {
+        if ($panel->getId() === 'xota') {
+            return $this->dashrash;
+        }
+
         return true;
     }
 }
