@@ -78,7 +78,6 @@ return [
     'queue' => [
         'connection' => env('TELESCOPE_QUEUE_CONNECTION', null),
         'queue' => env('TELESCOPE_QUEUE', null),
-        'delay' => env('TELESCOPE_QUEUE_DELAY', 10),
     ],
 
     /*
@@ -199,7 +198,6 @@ return [
             'ignore_http_methods' => [],
             'ignore_status_codes' => [],
         ],
-
         Watchers\ScheduleWatcher::class => env('TELESCOPE_SCHEDULE_WATCHER', true),
         Watchers\ViewWatcher::class => env('TELESCOPE_VIEW_WATCHER', true),
     ],
