@@ -7,20 +7,22 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages;
-use App\Filament\Xota\Widgets\SaldoClientesWidget;
 use Filament\Panel;
-use App\Filament\Xota\Widgets\Ultimas10TransacoesResource; // sem acento
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use App\Filament\Xota\Widgets\WithdrawRequestStatsWidget;
 use Filament\Widgets;
+
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use App\Filament\Xota\Widgets\Ultimas10TransaçõesResource;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+
+// widgets corretos
+use App\Filament\Xota\Widgets\SaldoClientesWidget;
+use App\Filament\Xota\Widgets\WithdrawRequestStatsWidget;
+use App\Filament\Xota\Resources\Ultimas10TransacoesResource\Widgets\TransactionList;
 
 class XotaPanelProvider extends PanelProvider
 {
@@ -39,12 +41,9 @@ class XotaPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Xota/Widgets'), for: 'App\\Filament\\Xota\\Widgets')
             ->widgets([
-                \App\Filament\Xota\Resources\Ultimas10TransacoesResource\Widgets\TransactionList::class,
+                TransactionList::class,
                 WithdrawRequestStatsWidget::class,
                 SaldoClientesWidget::class,
-
-
-
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -58,10 +57,9 @@ class XotaPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                \Filament\Http\Middleware\Authenticate::class,
-                'check.xota', // agora você pode usar só o alias
+                Authenticate::class,
+                'check.xota',
             ])
-            
             ->maxContentWidth('ExtraLarge');
     }
 }

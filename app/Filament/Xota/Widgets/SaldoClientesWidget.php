@@ -4,12 +4,13 @@ namespace App\Filament\Xota\Widgets;
 
 use App\Models\User;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 
 class SaldoClientesWidget extends BaseWidget
 {
-    public static ?string $heading = 'Saldo de Clientes';
+    public static ?string $heading = '💰 Saldo de Clientes';
     protected static ?int $sort = 2;
 
     protected function getTableQuery(): Builder
@@ -20,26 +21,28 @@ class SaldoClientesWidget extends BaseWidget
     protected function getTableColumns(): array
     {
         return [
-            Tables\Columns\TextColumn::make('name')
+            TextColumn::make('name')
                 ->label('Nome')
                 ->searchable(),
 
-            Tables\Columns\TextColumn::make('email')
+            TextColumn::make('email')
                 ->label('E-mail')
                 ->searchable()
                 ->copyable(),
 
-            Tables\Columns\TextColumn::make('saldo')
+            TextColumn::make('saldo')
                 ->label('Saldo')
                 ->formatStateUsing(fn ($state) => 'R$ ' . number_format($state / 100, 2, ',', '.'))
                 ->color('success')
-                ->sortable(),
+                ->sortable()
+                ->alignRight(),
 
-            Tables\Columns\TextColumn::make('bloqueado')
+            TextColumn::make('bloqueado')
                 ->label('Bloqueado')
                 ->formatStateUsing(fn ($state) => 'R$ ' . number_format($state / 100, 2, ',', '.'))
                 ->color('danger')
-                ->sortable(),
+                ->sortable()
+                ->alignRight(),
         ];
     }
 
