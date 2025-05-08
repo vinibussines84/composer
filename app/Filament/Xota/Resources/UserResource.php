@@ -11,9 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use App\Filament\Xota\Resources\UserResource\Pages;
-use Filament\Tables\Filters\Filter;
 
 class UserResource extends Resource
 {
@@ -63,34 +61,15 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                ToggleColumn::make('cashin_ativo')
-                    ->label('CashIn Ativo')
-                    ->sortable()
-                    ->onColor('success')
-                    ->offColor('danger')
-                    ->afterStateUpdated(fn ($record, $state) => $record->save()),
+                TextColumn::make('cashin_ativo')
+                    ->label('CashIn')
+                    ->formatStateUsing(fn ($state) => $state ? 'Ativo' : 'Desativado')
+                    ->sortable(),
 
-                ToggleColumn::make('cashout_ativo')
-                    ->label('CashOut Ativo')
-                    ->sortable()
-                    ->onColor('success')
-                    ->offColor('danger')
-                    ->afterStateUpdated(fn ($record, $state) => $record->save()),
-            ])
-            ->filters([
-                Filter::make('buscar')
-                    ->label('Nome ou E-mail')
-                    ->form([
-                        TextInput::make('value')->label('Buscar'),
-                    ])
-                    ->query(fn ($query, array $data) => $query
-                        ->when($data['value'], fn ($q, $value) =>
-                            $q->where(fn ($sub) =>
-                                $sub->where('name', 'like', "%{$value}%")
-                                    ->orWhere('email', 'like', "%{$value}%")
-                            )
-                        )
-                    ),
+                TextColumn::make('cashout_ativo')
+                    ->label('CashOut')
+                    ->formatStateUsing(fn ($state) => $state ? 'Ativo' : 'Desativado')
+                    ->sortable(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
