@@ -9,6 +9,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use Filament\Tables\Columns\TextColumn;
+use Illuminate\Support\HtmlString;
 
 class IntegrationResource extends Resource
 {
@@ -20,12 +22,12 @@ class IntegrationResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return 'Chaves de Integrações';
+        return 'Chaves de Integração';
     }
 
     public static function getPluralModelLabel(): string
     {
-        return '🔑 Chaves de Integrações';
+        return '🔑 Chaves de Integração';
     }
 
     public static function getNavigationDescription(): ?string
@@ -35,7 +37,6 @@ class IntegrationResource extends Resource
 
     public static function canCreate(): bool
     {
-        // Impede que o botão “Criar” seja exibido
         return false;
     }
 
@@ -49,33 +50,31 @@ class IntegrationResource extends Resource
         return $table
             ->query(fn () => User::query()->where('id', Auth::id()))
             ->columns([
-                Tables\Columns\TextColumn::make('authkey')
+                TextColumn::make('authkey')
                     ->label('Auth Key')
                     ->formatStateUsing(fn ($state) => substr($state, 0, 4) . '•••••••• 👁️')
+                    ->tooltip('Clique para copiar a chave completa')
                     ->copyable()
-                    ->tooltip('Clique para copiar a chave completa'),
+                    ->copyableState(fn ($record) => $record->authkey),
 
-                Tables\Columns\TextColumn::make('gtkey')
+                TextColumn::make('gtkey')
                     ->label('G Key')
                     ->formatStateUsing(fn ($state) => substr($state, 0, 4) . '•••••••• 👁️')
+                    ->tooltip('Clique para copiar a chave completa')
                     ->copyable()
-                    ->tooltip('Clique para copiar a chave completa'),
+                    ->copyableState(fn ($record) => $record->gtkey),
             ])
-            // Remove ações de linha
             ->actions([])
-            // Remove ações em massa
             ->bulkActions([])
-            // Remove o botão “Criar” no cabeçalho
-            ->headerActions([]);
+            ->headerActions([])
+            ->heading('Chaves de Integração')
+            ->description(new HtmlString('<span class="text-sm text-gray-500">Clique em suas credenciais para copiar.</span>'));
     }
 
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListIntegrations::route('/'),
-            // criação e edição desabilitadas
-            // 'create' => Pages\CreateIntegration::route('/create'),
-            // 'edit'   => Pages\EditIntegration::route('/{record}/edit'),
         ];
     }
 }
