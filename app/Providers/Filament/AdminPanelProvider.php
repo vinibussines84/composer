@@ -33,9 +33,10 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->path('admin')
             ->login()
+            ->registration()
+            ->plugin(BreezyCore::make())
             ->brandLogo(asset('theme/img/logopush.png'))
             ->brandLogoHeight('4rem')
-            ->registration()
             ->colors([
                 'primary' => Color::Red,
             ])
@@ -49,15 +50,12 @@ class AdminPanelProvider extends PanelProvider
                 AdminStats::class,
                 Ultimas10TransacoesDoUsuario::class,
             ])
-          
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
-                // DisableBladeIconComponents::class,
-                // DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
