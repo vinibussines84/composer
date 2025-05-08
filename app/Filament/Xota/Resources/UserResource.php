@@ -80,6 +80,7 @@ class UserResource extends Resource
             ->defaultSort('name');
     }
 
+    //aviso
     public static function getPages(): array
     {
         return [
