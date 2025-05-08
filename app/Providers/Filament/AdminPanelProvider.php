@@ -50,7 +50,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 AdminStats::class,
-                Ultimas10TransacoesDoUsuario::class,
+                Ultimas10TransacoesDoUsuario::class, //s
             ])
             ->middleware([
                 EncryptCookies::class,
