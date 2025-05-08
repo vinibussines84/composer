@@ -20,46 +20,49 @@ class WithdrawRequestStatsWidget extends BaseWidget
         $fimSemana = $hoje->copy()->endOfWeek();
         $mesAtual = $hoje->translatedFormat('F Y');
 
-        // PIX HOJE = entradas pagas + saques autorizados
-        $pixHojeIn = PixTransaction::whereDate('created_at', $hoje)
+        // PIX HOJE = quantidade de entradas pagas + saques autorizados
+        $pixHojeInCount = PixTransaction::whereDate('created_at', $hoje)
             ->where('status', 'paid')
             ->where('balance_type', 1)
-            ->sum('amount');
+            ->count();
 
-        $pixHojeOut = WithdrawRequest::whereDate('created_at', $hoje)
+        $pixHojeOutCount = WithdrawRequest::whereDate('created_at', $hoje)
             ->where('status', 'autorizado')
-            ->sum('amount');
+            ->count();
 
-        $pixHoje = ($pixHojeIn + $pixHojeOut) / 100;
+        $pixHoje = $pixHojeInCount + $pixHojeOutCount;
 
         // PIX SEMANA
-        $pixSemanaIn = PixTransaction::whereBetween('created_at', [$inicioSemana, $fimSemana])
+        $pixSemanaInCount = PixTransaction::whereBetween('created_at', [$inicioSemana, $fimSemana])
             ->where('status', 'paid')
             ->where('balance_type', 1)
-            ->sum('amount');
+            ->count();
 
-        $pixSemanaOut = WithdrawRequest::whereBetween('created_at', [$inicioSemana, $fimSemana])
+        $pixSemanaOutCount = WithdrawRequest::whereBetween('created_at', [$inicioSemana, $fimSemana])
             ->where('status', 'autorizado')
-            ->sum('amount');
+            ->count();
 
-        $pixSemana = ($pixSemanaIn + $pixSemanaOut) / 100;
+        $pixSemana = $pixSemanaInCount + $pixSemanaOutCount;
 
         // PIX MÊS
-        $pixMesIn = PixTransaction::whereMonth('created_at', $hoje->month)
+        $pixMesInCount = PixTransaction::whereMonth('created_at', $hoje->month)
             ->whereYear('created_at', $hoje->year)
             ->where('status', 'paid')
             ->where('balance_type', 1)
-            ->sum('amount');
+            ->count();
 
-        $pixMesOut = WithdrawRequest::whereMonth('created_at', $hoje->month)
+        $pixMesOutCount = WithdrawRequest::whereMonth('created_at', $hoje->month)
             ->whereYear('created_at', $hoje->year)
             ->where('status', 'autorizado')
-            ->sum('amount');
+            ->count();
 
-        $pixMes = ($pixMesIn + $pixMesOut) / 100;
+        $pixMes = $pixMesInCount + $pixMesOutCount;
 
         // Cash OUT do dia
-        $cashOutSumHoje = $pixHojeOut / 100;
+        $cashOutSumHoje = WithdrawRequest::whereDate('created_at', $hoje)
+            ->where('status', 'autorizado')
+            ->sum('amount') / 100;
+
         $cashOutCountHoje = WithdrawRequest::whereDate('created_at', $hoje)
             ->where('status', 'autorizado')
             ->count();
@@ -69,6 +72,7 @@ class WithdrawRequestStatsWidget extends BaseWidget
             ->where('status', 'paid')
             ->where('balance_type', 1)
             ->get();
+
         $cashInTotal = $cashInCollection->sum('amount') / 100;
         $cashInCount = $cashInCollection->count();
 
@@ -108,18 +112,18 @@ class WithdrawRequestStatsWidget extends BaseWidget
 
         $cards = [];
 
-        $cards[] = Card::make('PIX HOJE', 'R$ ' . number_format($pixHoje, 2, ',', '.'))
+        $cards[] = Card::make('PIX HOJE', (string) $pixHoje)
             ->description($hoje->format('d/m/Y'))
             ->icon('heroicon-o-calendar')
             ->descriptionIcon('heroicon-o-check-circle')
             ->color('warning');
 
-        $cards[] = Card::make('PIX SEMANA', 'R$ ' . number_format($pixSemana, 2, ',', '.'))
+        $cards[] = Card::make('PIX SEMANA', (string) $pixSemana)
             ->description($inicioSemana->format('d/m') . ' a ' . $fimSemana->format('d/m'))
             ->icon('heroicon-o-calendar')
             ->color('primary');
 
-        $cards[] = Card::make('PIX MÊS', 'R$ ' . number_format($pixMes, 2, ',', '.'))
+        $cards[] = Card::make('PIX MÊS', (string) $pixMes)
             ->description($mesAtual)
             ->icon('heroicon-o-calendar-days')
             ->color('success');
