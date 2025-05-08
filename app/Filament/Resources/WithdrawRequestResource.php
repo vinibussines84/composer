@@ -141,6 +141,7 @@ class WithdrawRequestResource extends Resource
     {
         return [
             'index' => Pages\ListWithdrawRequests::route('/'),
+            'create' => Pages\CreateWithdrawRequest::route('/create'), // ✅ rota de criação
         ];
     }
 }
