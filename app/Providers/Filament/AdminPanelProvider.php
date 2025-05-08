@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Auth\Login;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -27,8 +26,6 @@ use Awcodes\LightSwitch\Enums\Alignment;
 use App\Filament\Widgets\AdminStats;
 use App\Filament\Widgets\Ultimas10TransacoesDoUsuario;
 
-
-
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
@@ -37,7 +34,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('trust')
             ->default()
             ->path('trust')
-            ->login(Login::class)
+            ->login()
             ->registration()
             ->passwordReset()
             ->profile()
