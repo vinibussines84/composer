@@ -4,8 +4,8 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
-use App\Models\PixTransaction;
 use Illuminate\Support\Facades\Log;
+use App\Models\PixTransaction;
 
 class CheckPixStatus extends Command
 {
@@ -51,21 +51,20 @@ class CheckPixStatus extends Command
                 continue;
             }
 
-            $valor = $transaction->amount / 100; // valor em reais
-            $taxa  = $user->taxa_cash_in ?? 0;
-
             if ($newStatus === 'paid' && $oldStatus !== 'paid') {
-                $valorLiquido    = $valor - ($valor * ($taxa / 100));
-                $valorCentavos   = intval(round($valorLiquido * 100));
+                $valorCentavos = $transaction->amount;
+                $taxa = $user->taxa_cash_in ?? 0;
 
-                $user->increment('saldo', $valorCentavos);
+                $valorLiquidoCentavos = intval(round($valorCentavos * (1 - ($taxa / 100))));
+
+                $user->increment('saldo', $valorLiquidoCentavos);
 
                 Log::info('💰 PIX creditado com taxa', [
-                    'valor_bruto'            => $valor,
-                    'taxa'                   => $taxa,
-                    'valor_liquido'          => $valorLiquido,
-                    'adicionado_em_centavos' => $valorCentavos,
-                    'user_id'                => $user->id,
+                    'user_id' => $user->id,
+                    'valor_bruto_centavos' => $valorCentavos,
+                    'taxa_percentual' => $taxa,
+                    'valor_liquido_centavos' => $valorLiquidoCentavos,
+                    'novo_saldo' => $user->fresh()->saldo,
                 ]);
             }
 
