@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Widgets;
+namespace App\Filament\Xota\Widgets;
 
 use App\Models\User;
 use Filament\Tables;

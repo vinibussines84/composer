@@ -41,7 +41,7 @@ class XotaPanelProvider extends PanelProvider
             ->widgets([
                 \App\Filament\Xota\Resources\Ultimas10TransacoesResource\Widgets\TransactionList::class,
                 WithdrawRequestStatsWidget::class,
-                //SaldoClientesWidget::class,
+                SaldoClientesWidget::class,
 
 
 
