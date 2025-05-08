@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\WithdrawRequestResource\Pages;
 use App\Models\WithdrawRequest;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -16,6 +15,8 @@ use Filament\Tables\Columns\IconColumn;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
+use Filament\Tables\Actions\CreateAction;
+use Filament\Notifications\Notification;
 
 class WithdrawRequestResource extends Resource
 {
@@ -123,7 +124,22 @@ class WithdrawRequestResource extends Resource
             ])
             ->filters([])
             ->actions([])
-            ->bulkActions([]);
+            ->bulkActions([])
+            ->headerActions([
+                CreateAction::make()
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['user_id'] = auth()->id();
+                        $data['status'] = 'pending';
+                        $data['amount'] = intval($data['amount'] * 100);
+                        return $data;
+                    })
+                    ->after(function () {
+                        Notification::make()
+                            ->title('Saque criado com sucesso.')
+                            ->success()
+                            ->send();
+                    }),
+            ]);
     }
 
     public static function getEloquentQuery(): Builder
@@ -140,8 +156,7 @@ class WithdrawRequestResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListWithdrawRequests::route('/'),
-            'create' => Pages\CreateWithdrawRequest::route('/create'), // ✅ rota de criação
+            'index' => \App\Filament\Resources\WithdrawRequestResource\Pages\ListWithdrawRequests::route('/'),
         ];
     }
 }
