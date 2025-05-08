@@ -7,6 +7,7 @@ use App\Models\PixTransaction;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Card;
+use Illuminate\Support\HtmlString;
 
 class WithdrawRequestStatsWidget extends BaseWidget
 {
@@ -105,6 +106,10 @@ class WithdrawRequestStatsWidget extends BaseWidget
             -$cashOutSumHoje,
         ];
 
+        // Cor do card baseada no saldo líquido
+        $netTotal = $cashInTotal - $cashOutSumHoje;
+        $cardColor = $netTotal >= 0 ? 'success' : 'danger';
+
         $cards = [];
 
         $cards[] = Card::make('PIX HOJE', (string) $pixHoje)
@@ -126,14 +131,14 @@ class WithdrawRequestStatsWidget extends BaseWidget
         $cards[] = Card::make('TRANSAÇÕES DE HOJE', '')
             ->chart(array_values($chartData))
             ->icon('heroicon-o-currency-dollar')
-            ->color('danger')
-            ->description(
-                "Cash IN: R$ " . number_format($cashInTotal, 2, ',', '.') . " ({$cashInCount}) | " .
+            ->color($cardColor)
+            ->description(new HtmlString(
+                "Cash IN: R$ " . number_format($cashInTotal, 2, ',', '.') . " ({$cashInCount})<br>" .
                 "Cash OUT: R$ " . number_format($cashOutSumHoje, 2, ',', '.') . " ({$cashOutCountHoje})"
-            );
+            ));
 
         $cards[] = Card::make('COMISSÃO BRUTA', 'R$ ' . number_format($comissaoDia, 2, ',', '.'))
-            ->description("Semana: R$ " . number_format($comissaoSemana, 2, ',', '.'))
+            ->description(new HtmlString("Semana: R$ " . number_format($comissaoSemana, 2, ',', '.')))
             ->icon('heroicon-o-banknotes')
             ->color('danger');
 
