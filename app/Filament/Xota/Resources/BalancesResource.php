@@ -20,7 +20,7 @@ class BalancesResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-    protected static ?string $navigationLabel = 'Balances';
+    protected static ?string $navigationLabel = 'Saldo Clientes';
 
     public static function form(Form $form): Form
     {
