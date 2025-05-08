@@ -52,41 +52,19 @@ class IntegrationResource extends Resource
             ->columns([
                 TextColumn::make('authkey')
                     ->label('Auth Key')
-                    ->html()
-                    ->formatStateUsing(function ($state, $record) {
-                        return new HtmlString('
-                            <span 
-                                x-data="{ show: false }" 
-                                @click="show = !show; navigator.clipboard.writeText(\'' . e($record->authkey) . '\')" 
-                                class="cursor-pointer text-sm text-gray-800 hover:underline"
-                            >
-                                <span x-show="!show" x-cloak>' . substr($record->authkey, 0, 4) . '•••••••• 👁️</span>
-                                <span x-show="show" x-cloak>' . e($record->authkey) . '</span>
-                            </span>
-                        ');
-                    }),
+                    ->copyable()
+                    ->copyableState(fn ($record) => $record->authkey),
 
                 TextColumn::make('gtkey')
                     ->label('G Key')
-                    ->html()
-                    ->formatStateUsing(function ($state, $record) {
-                        return new HtmlString('
-                            <span 
-                                x-data="{ show: false }" 
-                                @click="show = !show; navigator.clipboard.writeText(\'' . e($record->gtkey) . '\')" 
-                                class="cursor-pointer text-sm text-gray-800 hover:underline"
-                            >
-                                <span x-show="!show" x-cloak>' . substr($record->gtkey, 0, 4) . '•••••••• 👁️</span>
-                                <span x-show="show" x-cloak>' . e($record->gtkey) . '</span>
-                            </span>
-                        ');
-                    }),
+                    ->copyable()
+                    ->copyableState(fn ($record) => $record->gtkey),
             ])
             ->actions([])
             ->bulkActions([])
             ->headerActions([])
             ->heading('Chaves de Integração')
-            ->description(new HtmlString('<span class="text-sm text-gray-500">Clique em suas credenciais para copiar e revelar.</span>'));
+            ->description(new HtmlString('<span class="text-sm text-gray-500">Clique para copiar suas credenciais.</span>'));
     }
 
     public static function getPages(): array
