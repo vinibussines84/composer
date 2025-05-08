@@ -9,6 +9,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -29,7 +30,7 @@ class User extends Authenticatable implements FilamentUser
         'webhookcashout',
         'saldo',
         'bloqueado',
-        'dashrash', // novo campo
+        'dashrash',
     ];
 
     protected $hidden = [
@@ -56,5 +57,13 @@ class User extends Authenticatable implements FilamentUser
         }
 
         return true;
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($user) {
+            $user->authkey = $user->authkey ?? strtoupper(Str::random(10));
+            $user->gtkey = $user->gtkey ?? strtoupper(Str::random(10));
+        });
     }
 }
