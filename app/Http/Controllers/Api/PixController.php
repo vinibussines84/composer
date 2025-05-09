@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\PixTransaction;
 use Illuminate\Support\Facades\Http;
+use Carbon\Carbon;
 
 class PixController extends Controller
 {
@@ -76,7 +77,9 @@ class PixController extends Controller
                 'amount' => $amountInCents,
                 'status' => $data['status'] ?? 'unknown',
                 'pix' => $data['pix'] ?? [],
-                'created_at_api' => $data['createdAt'] ?? now(),
+                'created_at_api' => isset($data['createdAt'])
+                    ? Carbon::parse($data['createdAt'])->utc()
+                    : now()->utc(),
             ]);
 
             return response()->json([
