@@ -43,7 +43,7 @@ class AdminPanelProvider extends PanelProvider
                 LightSwitchPlugin::make()->position(Alignment::BottomCenter),
             ])
             ->brandLogo(asset('theme/img/trustgate2.png'))
-            ->brandLogoHeight('4rem')
+            ->brandLogoHeight('3rem')
             ->colors([
 'primary' => Color::Amber,
             ])
