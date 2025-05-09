@@ -42,10 +42,10 @@ class AdminPanelProvider extends PanelProvider
                 BreezyCore::make(),
                 LightSwitchPlugin::make()->position(Alignment::BottomCenter),
             ])
-            ->brandLogo(asset('theme/img/logopush.png'))
+            ->brandLogo(asset('theme/img/trustgate2.png'))
             ->brandLogoHeight('4rem')
             ->colors([
-                'primary' => Color::Red,
+'primary' => Color::Amber,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
