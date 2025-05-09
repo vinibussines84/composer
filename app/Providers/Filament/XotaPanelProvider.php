@@ -70,6 +70,7 @@ class XotaPanelProvider extends PanelProvider
                 Authenticate::class,
                 CheckXotaAccess::class,
             ])
+            ->topNavigation() // ✅ adicionado aqui
             ->maxContentWidth('ExtraLarge');
     }
 }
