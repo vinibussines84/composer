@@ -39,11 +39,7 @@ class UserResource extends Resource
                 Select::make('provedora')
                     ->label('Provedora')
                     ->options([
-                        'PayOnHub'   => 'PayOnHub',
-                        'HelpGrid'   => 'HelpGrid',
-                        'PerfectPay' => 'PerfectPay',
-                        'MundPay'    => 'MundPay',
-                        'VendePay'   => 'VendePay',
+                        '#01PayOn'   => 'Microbio',
                     ])
                     ->searchable()
                     ->native(false),
