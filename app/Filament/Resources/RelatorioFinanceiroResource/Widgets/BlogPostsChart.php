@@ -12,7 +12,6 @@ class BlogPostsChart extends ChartWidget
 {
     protected static ?string $heading = 'Faturamento por período';
 
-    protected int | string | array $columnSpan = 12;
 
     public ?string $startDate = null;
     public ?string $endDate = null;
