@@ -27,6 +27,7 @@ class WithdrawRequestResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->orderByDesc('created_at')) // <- Ordenar pelos mais recentes
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')->label('Usuário'),
                 Tables\Columns\TextColumn::make('amount')
