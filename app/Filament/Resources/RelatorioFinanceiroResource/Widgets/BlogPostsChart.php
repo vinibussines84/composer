@@ -10,18 +10,19 @@ use Illuminate\Support\Facades\Auth;
 class BlogPostsChart extends ChartWidget
 {
     protected static ?string $heading = 'Faturamento da Semana';
-    protected int | string | array $columnSpan = 2;
+
+    // ⬇️ Ocupar 1/3 da largura total da linha
+    protected int | string | array $columnSpan = 4;
 
     protected function getData(): array
     {
         $user = Auth::user();
 
-        $startOfWeek = Carbon::now()->startOfWeek(); // Segunda
-        $endOfWeek = Carbon::now()->endOfWeek();     // Domingo
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
 
         $data = collect();
 
-        // Gera uma linha para cada dia da semana (Seg a Dom)
         for ($date = $startOfWeek->copy(); $date <= $endOfWeek; $date->addDay()) {
             $total = PixTransaction::query()
                 ->where('authkey', $user->authkey)
@@ -32,7 +33,7 @@ class BlogPostsChart extends ChartWidget
 
             $data->push([
                 'label' => $date->format('d/m'),
-                'value' => $total / 100, // Centavos para reais
+                'value' => $total / 100,
             ]);
         }
 
@@ -49,7 +50,6 @@ class BlogPostsChart extends ChartWidget
 
     protected function getType(): string
     {
-        return 'line'; // Agora é gráfico de linha
+        return 'line';
     }
 }
-//kk
