@@ -9,21 +9,21 @@ use Illuminate\Support\Facades\Auth;
 
 class BlogPostsChart extends ChartWidget
 {
-    protected static ?string $heading = 'Faturamento da Semana';
+    protected static ?string $heading = 'Faturamento dos últimos 7 dias';
 
-    // ⬇️ Ocupar 1/3 da largura total da linha
-    protected int | string | array $columnSpan = 4;
+    // ⬇️ Ocupar 1/4 da linha, sem ultrapassar o layout
+    protected int | string | array $columnSpan = 3;
 
     protected function getData(): array
     {
         $user = Auth::user();
 
-        $startOfWeek = Carbon::now()->startOfWeek();
-        $endOfWeek = Carbon::now()->endOfWeek();
+        $today = Carbon::today();
+        $startDate = $today->copy()->subDays(6); // últimos 7 dias, incluindo hoje
 
         $data = collect();
 
-        for ($date = $startOfWeek->copy(); $date <= $endOfWeek; $date->addDay()) {
+        for ($date = $startDate->copy(); $date <= $today; $date->addDay()) {
             $total = PixTransaction::query()
                 ->where('authkey', $user->authkey)
                 ->where('gtkey', $user->gtkey)
@@ -40,8 +40,10 @@ class BlogPostsChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Recebido por dia',
+                    'label' => 'Recebido',
                     'data' => $data->pluck('value'),
+                    'fill' => true,
+                    'tension' => 0.4,
                 ],
             ],
             'labels' => $data->pluck('label'),
