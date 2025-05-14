@@ -4,26 +4,43 @@ namespace App\Filament\Resources\RelatorioFinanceiroResource\Widgets;
 
 use App\Models\PixTransaction;
 use Carbon\Carbon;
+use Filament\Forms\Components\DatePicker;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\Auth;
 
 class BlogPostsChart extends ChartWidget
 {
-    protected static ?string $heading = 'Faturamento dos últimos 7 dias';
+    protected static ?string $heading = 'Faturamento por período';
+    protected int | string | array $columnSpan = 6;
 
-    // ⬇️ Ocupar 1/4 da linha, sem ultrapassar o layout
-    protected int | string | array $columnSpan = 3;
+    public ?string $startDate = null;
+    public ?string $endDate = null;
+
+    protected function getFormSchema(): array
+    {
+        return [
+            DatePicker::make('startDate')
+                ->label('Data inicial')
+                ->default(Carbon::now()->subDays(6))
+                ->reactive(),
+
+            DatePicker::make('endDate')
+                ->label('Data final')
+                ->default(Carbon::now())
+                ->reactive(),
+        ];
+    }
 
     protected function getData(): array
     {
         $user = Auth::user();
 
-        $today = Carbon::today();
-        $startDate = $today->copy()->subDays(6); // últimos 7 dias, incluindo hoje
+        $start = $this->startDate ? Carbon::parse($this->startDate) : Carbon::now()->subDays(6);
+        $end = $this->endDate ? Carbon::parse($this->endDate) : Carbon::now();
 
         $data = collect();
 
-        for ($date = $startDate->copy(); $date <= $today; $date->addDay()) {
+        for ($date = $start->copy(); $date <= $end; $date->addDay()) {
             $total = PixTransaction::query()
                 ->where('authkey', $user->authkey)
                 ->where('gtkey', $user->gtkey)
