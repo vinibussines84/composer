@@ -12,6 +12,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Select;
 use App\Filament\Xota\Resources\UserResource\Pages;
 use Filament\Tables\Filters\Filter;
 
@@ -33,6 +34,20 @@ class UserResource extends Resource
                 TextInput::make('taxa_cash_out')->label('Taxa CashOut %')->numeric()->inputMode('decimal'),
                 TextInput::make('authkey')->label('AuthKey'),
                 TextInput::make('gtkey')->label('GtKey'),
+
+                // Novo campo: Provedora
+                Select::make('provedora')
+                    ->label('Provedora')
+                    ->options([
+                        'PayOnHub'   => 'PayOnHub',
+                        'HelpGrid'   => 'HelpGrid',
+                        'PerfectPay' => 'PerfectPay',
+                        'MundPay'    => 'MundPay',
+                        'VendePay'   => 'VendePay',
+                    ])
+                    ->searchable()
+                    ->native(false),
+
                 TextInput::make('senha')->label('Senha'),
 
                 Toggle::make('cashin_ativo')
@@ -81,6 +96,12 @@ class UserResource extends Resource
                 TextColumn::make('taxa_cash_out')
                     ->label('Taxa CashOut')
                     ->formatStateUsing(fn ($state) => number_format($state, 2) . '%'),
+
+                // Exibir a provedora na tabela
+                TextColumn::make('provedora')
+                    ->label('Provedora')
+                    ->sortable()
+                    ->toggleable(),
 
                 ToggleColumn::make('cashin_ativo')
                     ->label('CashIn')

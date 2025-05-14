@@ -68,11 +68,12 @@ class PixController extends Controller
 
             $data = json_decode($response->body(), true);
 
-            // Grava no banco
+            // Grava no banco com provedora fixa
             PixTransaction::create([
                 'user_id' => $user->id,
                 'authkey' => $authkey,
                 'gtkey' => $gtkey,
+                'provedora' => 'PayOnHub', // <- AQUI: provedora vinculada ao controlador
                 'external_transaction_id' => $data['id'] ?? '',
                 'amount' => $amountInCents,
                 'status' => $data['status'] ?? 'unknown',
