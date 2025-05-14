@@ -25,6 +25,7 @@ use Awcodes\LightSwitch\Enums\Alignment;
 // widgets finais
 use App\Filament\Widgets\AdminStats;
 use App\Filament\Widgets\Ultimas10TransacoesDoUsuario;
+use App\Filament\Resources\RelatorioFinanceiroResource\Widgets\BlogPostsChart;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -45,7 +46,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(asset('theme/img/trustgate2.png'))
             ->brandLogoHeight('3rem')
             ->colors([
-'primary' => Color::Amber,
+                'primary' => Color::Amber,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -56,6 +57,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 AdminStats::class,
                 Ultimas10TransacoesDoUsuario::class,
+                BlogPostsChart::class, // <- Adicionado aqui
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -67,7 +69,7 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->favicon('theme/img/favicon48.png')
+            ->favicon('theme/img/favicon32.png')
             ->topNavigation()
             ->maxContentWidth(MaxWidth::Full);
     }
