@@ -4,29 +4,34 @@ namespace App\Filament\Resources\RelatorioFinanceiroResource\Widgets;
 
 use App\Models\PixTransaction;
 use Carbon\Carbon;
-use Filament\Forms\Components\DatePicker;
 use Filament\Widgets\ChartWidget;
+use Filament\Forms\Components\DatePicker;
 use Illuminate\Support\Facades\Auth;
 
 class BlogPostsChart extends ChartWidget
 {
     protected static ?string $heading = 'Faturamento por período';
-    protected int | string | array $columnSpan = 6;
+
+    protected int | string | array $columnSpan = 12;
 
     public ?string $startDate = null;
     public ?string $endDate = null;
+
+    public function mount(): void
+    {
+        $this->startDate = now()->subDays(6)->toDateString();
+        $this->endDate = now()->toDateString();
+    }
 
     protected function getFormSchema(): array
     {
         return [
             DatePicker::make('startDate')
                 ->label('Data inicial')
-                ->default(Carbon::now()->subDays(6))
                 ->reactive(),
 
             DatePicker::make('endDate')
                 ->label('Data final')
-                ->default(Carbon::now())
                 ->reactive(),
         ];
     }
@@ -35,8 +40,8 @@ class BlogPostsChart extends ChartWidget
     {
         $user = Auth::user();
 
-        $start = $this->startDate ? Carbon::parse($this->startDate) : Carbon::now()->subDays(6);
-        $end = $this->endDate ? Carbon::parse($this->endDate) : Carbon::now();
+        $start = $this->startDate ? Carbon::parse($this->startDate) : now()->subDays(6);
+        $end = $this->endDate ? Carbon::parse($this->endDate) : now();
 
         $data = collect();
 
@@ -59,8 +64,6 @@ class BlogPostsChart extends ChartWidget
                 [
                     'label' => 'Recebido',
                     'data' => $data->pluck('value'),
-                    'fill' => true,
-                    'tension' => 0.4,
                 ],
             ],
             'labels' => $data->pluck('label'),
