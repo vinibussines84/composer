@@ -9,36 +9,47 @@ use Illuminate\Support\Facades\Auth;
 
 class BlogPostsChart extends ChartWidget
 {
-    protected static ?string $heading = 'Total Recebido (últimas 24h)';
+    protected static ?string $heading = 'Faturamento da Semana';
     protected int | string | array $columnSpan = 2;
 
     protected function getData(): array
     {
         $user = Auth::user();
 
-        $total = PixTransaction::query()
-            ->where('authkey', $user->authkey)
-            ->where('gtkey', $user->gtkey)
-            ->where('status', 'paid')
-            ->where('created_at', '>=', Carbon::now()->subDay())
-            ->sum('amount');
+        $startOfWeek = Carbon::now()->startOfWeek(); // Segunda
+        $endOfWeek = Carbon::now()->endOfWeek();     // Domingo
 
-        // Converte de centavos para reais
-        $total = $total / 100;
+        $data = collect();
+
+        // Gera uma linha para cada dia da semana (Seg a Dom)
+        for ($date = $startOfWeek->copy(); $date <= $endOfWeek; $date->addDay()) {
+            $total = PixTransaction::query()
+                ->where('authkey', $user->authkey)
+                ->where('gtkey', $user->gtkey)
+                ->where('status', 'paid')
+                ->whereDate('created_at', $date->toDateString())
+                ->sum('amount');
+
+            $data->push([
+                'label' => $date->format('d/m'),
+                'value' => $total / 100, // Centavos para reais
+            ]);
+        }
 
         return [
             'datasets' => [
                 [
-                    'label' => 'Recebido',
-                    'data' => [$total],
+                    'label' => 'Recebido por dia',
+                    'data' => $data->pluck('value'),
                 ],
             ],
-            'labels' => ['Últimas 24h'],
+            'labels' => $data->pluck('label'),
         ];
     }
 
     protected function getType(): string
     {
-        return 'bar';
+        return 'line'; // Agora é gráfico de linha
     }
 }
+//kk
