@@ -5,6 +5,7 @@ namespace App\Filament\Xota\Resources;
 use App\Filament\Xota\Resources\PixTransactionResource\Pages;
 use App\Models\PixTransaction;
 use App\Models\User;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Tables;
 use Filament\Resources\Resource;
@@ -79,6 +80,10 @@ class PixTransactionResource extends Resource
                     ->label('Criado na API')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
+
+                TextColumn::make('created_at_api')
+                    ->label('Horário de Brasília')
+                    ->formatStateUsing(fn ($state) => Carbon::parse($state)->subHours(3)->format('d/m/Y H:i')),
             ])
             ->filters([
                 SelectFilter::make('user_id')
