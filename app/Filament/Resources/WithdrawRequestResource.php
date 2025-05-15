@@ -97,8 +97,12 @@ class WithdrawRequestResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('amount')
-                    ->label('Valor líquido')
+                    ->label('Valor bruto')
                     ->getStateUsing(fn ($record) => $record->amount / 100)
+                    ->money('BRL'),
+
+                Tables\Columns\TextColumn::make('valor_liquido')
+                    ->label('Valor líquido')
                     ->money('BRL'),
 
                 Tables\Columns\TextColumn::make('pix_type')->label('Tipo de chave'),
