@@ -25,14 +25,13 @@ class WithdrawRequest extends Model
             $model->user_id = $user->id;
             $model->status = 'pending';
 
-            // Converte para centavos (caso usuário mande em reais)
-            $valor = (float) $model->amount;
+            // Corrige conversão para centavos
+            $valorInformado = $model->amount;
 
-            // Se estiver entre R$0,01 e R$1000,00 (em centavos), converte
-            if ($valor > 0 && $valor < 100000) {
-                $valorEmCentavos = (int) round($valor * 100);
+            if (is_float($valorInformado) || str_contains((string) $valorInformado, '.')) {
+                $valorEmCentavos = (int) round(((float) $valorInformado) * 100);
             } else {
-                $valorEmCentavos = (int) $valor;
+                $valorEmCentavos = (int) $valorInformado;
             }
 
             $model->amount = $valorEmCentavos;
