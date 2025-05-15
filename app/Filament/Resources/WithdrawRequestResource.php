@@ -86,7 +86,7 @@ class WithdrawRequestResource extends Resource
                         $valor = $get('amount');
                         if (!$valor || $valor <= 0) return 'R$ 0,00';
                         $liquido = $valor - ($valor * ($taxa / 100));
-                        return 'R$ ' . number_format($liquido, 2, ',', '.') . " Valor já descontado com a taxa de $taxa%";
+                        return 'R$ ' . number_format($liquido, 2, ',', '.') . " (com desconto de $taxa%)";
                     }),
             ])
             ->columns(2);
@@ -97,7 +97,7 @@ class WithdrawRequestResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('amount')
-                    ->label('Valor')
+                    ->label('Valor líquido')
                     ->getStateUsing(fn ($record) => $record->amount / 100)
                     ->money('BRL'),
 
@@ -141,7 +141,7 @@ class WithdrawRequestResource extends Resource
     {
         return [
             'index' => Pages\ListWithdrawRequests::route('/'),
-            'create' => Pages\CreateWithdrawRequest::route('/create'), // ✅ rota de criação
+            'create' => Pages\CreateWithdrawRequest::route('/create'),
         ];
     }
 }
