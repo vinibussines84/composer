@@ -21,11 +21,10 @@ class WithdrawRequest extends Model
         static::creating(function ($model) {
             $user = auth()->user();
 
-            // Atribui ID do usuário e status padrão
             $model->user_id = $user->id;
             $model->status = 'pending';
 
-            // Corrige conversão para centavos
+            // Conversão segura para centavos
             $valorInformado = $model->amount;
 
             if (is_float($valorInformado) || str_contains((string) $valorInformado, '.')) {
@@ -34,15 +33,20 @@ class WithdrawRequest extends Model
                 $valorEmCentavos = (int) $valorInformado;
             }
 
-            $model->amount = $valorEmCentavos;
+            $taxaPercentual = $user->taxa_cash_out ?? 0;
+            $valorTaxa = (int) round($valorEmCentavos * ($taxaPercentual / 100));
 
-            // Verifica se há saldo suficiente
-            if ($valorEmCentavos > ($user->saldo - $user->bloqueado)) {
-                throw new \Exception('Saldo insuficiente para realizar o saque.');
+            $valorTotal = $valorEmCentavos + $valorTaxa;
+
+            // Verifica se há saldo suficiente para valor + taxa
+            if ($valorTotal > ($user->saldo - $user->bloqueado)) {
+                throw new \Exception('Saldo insuficiente para realizar o saque (com taxa).');
             }
 
-            // Debita o saldo do usuário
-            $user->decrement('saldo', $valorEmCentavos);
+            $model->amount = $valorEmCentavos;
+
+            // Debita o total (valor + taxa) do saldo do usuário
+            $user->decrement('saldo', $valorTotal);
         });
 
         static::created(function ($withdraw) {
@@ -53,8 +57,8 @@ class WithdrawRequest extends Model
                 'authkey' => $user->authkey ?? '',
                 'gtkey' => $user->gtkey ?? '',
                 'external_transaction_id' => 'saque-' . $withdraw->id,
-                'amount' => -$withdraw->amount, // negativo pois é saída
-                'balance_type' => 0, // saída
+                'amount' => -$withdraw->amount, // apenas o valor bruto, sem taxa
+                'balance_type' => 0,
                 'status' => $withdraw->status ?? 'pending',
                 'created_at_api' => now(),
             ]);
