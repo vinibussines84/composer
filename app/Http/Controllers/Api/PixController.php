@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Models\PixTransaction;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
-
+//kk
 class PixController extends Controller
 {
     public function handle(Request $request)
@@ -54,8 +54,8 @@ class PixController extends Controller
                         'type' => 'cpf',
                         'number' => '144.930.300-54'
                     ],
-                    'name' => 'SPX',
-                    'email' => 'SPX@GMAIL.COM'
+                    'name' => 'ENCAPSULADO BR',
+                    'email' => 'atacadogo2024@gmail.com'
                 ],
                 'items' => [[
                     'title' => 'SPX',
