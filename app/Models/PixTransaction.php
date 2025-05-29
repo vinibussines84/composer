@@ -13,6 +13,7 @@ class PixTransaction extends Model
 
     protected $fillable = [
         'user_id',
+        'txid',
         'authkey',
         'gtkey',
         'external_transaction_id',

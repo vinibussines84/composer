@@ -38,7 +38,11 @@ class PixTransactionResource extends Resource
                 ->orderByDesc('created_at')
             )
             ->columns([
-                TextColumn::make('id')->label('ID')->sortable(),
+                TextColumn::make('txid')
+                    ->label('TXID')
+                    ->searchable()
+                    ->copyable()
+                    ->limit(30),
 
                 TextColumn::make('amount')
                     ->label('Valor')

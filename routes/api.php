@@ -13,3 +13,6 @@ Route::get('/user', function (Request $request) {
 Route::post('/pix', [PixController::class, 'handle']);
 
 Route::post('/pix/webhook', [PixWebhookController::class, 'handle']);
+
+Route::post('/webhook/bloobank', [\App\Http\Controllers\Webhook\BloobankWebhookController::class, 'handle']);
+
