@@ -74,18 +74,20 @@ class BlogPostsChart extends ChartWidget
 
     protected function getType(): string
     {
-        return 'line';
+        return 'line'; // Se quiser barras, troque por 'bar'
     }
 
     protected function getOptions(): ?array
     {
         return [
+            'responsive' => true,
             'plugins' => [
                 'tooltip' => [
+                    'enabled' => true,
                     'callbacks' => [
                         'label' => 'function(context) {
-                            let valor = context.parsed.y ?? 0;
-                            return "R$ " + valor.toLocaleString("pt-BR", {
+                            const valor = context.raw || 0;
+                            return "Recebido: R$ " + valor.toLocaleString("pt-BR", {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2
                             });
