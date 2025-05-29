@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class BlogPostsChart extends ChartWidget
 {
-    protected static ?string $heading = '📊 Faturamento por Período';
+    protected static ?string $heading = '📊 Faturamento por Período (R$)';
     protected int | string | array $columnSpan = 2;
 
     public ?string $startDate = null;
@@ -26,11 +26,10 @@ class BlogPostsChart extends ChartWidget
     {
         return [
             DatePicker::make('startDate')
-                ->label('📅 Data inicial')
+                ->label('Data inicial')
                 ->reactive(),
-
             DatePicker::make('endDate')
-                ->label('📅 Data final')
+                ->label('Data final')
                 ->reactive(),
         ];
     }
@@ -54,88 +53,52 @@ class BlogPostsChart extends ChartWidget
 
             $data->push([
                 'label' => $date->format('d/m'),
-                'value' => $total / 100,
+                'value' => $total / 100, // já convertido para reais
             ]);
         }
 
         return [
             'datasets' => [
                 [
-                    'label' => '💰 Recebido',
+                    'label' => 'Recebido',
                     'data' => $data->pluck('value'),
-                    'tension' => 0.4, // Suaviza a linha
-                    'fill' => true,
-                    'backgroundColor' => 'rgba(34,197,94,0.2)', // Verde claro
-                    'borderColor' => 'rgba(34,197,94,1)',       // Verde forte
-                    'pointBackgroundColor' => 'white',
-                    'pointBorderColor' => 'rgba(34,197,94,1)',
-                    'pointRadius' => 5,
-                    'pointHoverRadius' => 7,
                 ],
             ],
             'labels' => $data->pluck('label'),
         ];
     }
 
+    protected function getType(): string
+    {
+        return 'line';
+    }
+
     protected function getOptions(): ?array
     {
         return [
-            'plugins' => [
-                'tooltip' => [
-                    'backgroundColor' => '#1e293b',
-                    'titleColor' => '#ffffff',
-                    'bodyColor' => '#facc15',
-                    'callbacks' => [
-                        'label' => \Illuminate\Support\Js::from(
-                            <<<JS
-                            function(context) {
-                                let value = context.raw;
-                                return '💸 R$ ' + value.toFixed(2).replace('.', ',');
-                            }
-                            JS
-                        ),
-                    ],
-                ],
-                'legend' => [
-                    'labels' => [
-                        'color' => '#334155',
-                        'font' => [
-                            'size' => 14,
-                            'weight' => 'bold',
-                        ],
-                    ],
-                ],
-            ],
             'scales' => [
                 'y' => [
                     'ticks' => [
-                        'color' => '#64748b',
-                        'callback' => \Illuminate\Support\Js::from(
-                            <<<JS
-                            function(value) {
-                                return 'R$ ' + value.toFixed(2).replace('.', ',');
-                            }
-                            JS
-                        ),
-                    ],
-                    'grid' => [
-                        'color' => 'rgba(203,213,225,0.3)',
+                        'callback' => \Illuminate\Support\Js::from('function(value) { return "R$" + value.toFixed(2).replace(".", ","); }'),
                     ],
                 ],
-                'x' => [
-                    'ticks' => [
-                        'color' => '#64748b',
-                    ],
-                    'grid' => [
-                        'display' => false,
+            ],
+            'plugins' => [
+                'tooltip' => [
+                    'callbacks' => [
+                        'label' => \Illuminate\Support\Js::from('function(context) {
+                            let label = context.dataset.label || "";
+                            if (label) {
+                                label += ": ";
+                            }
+                            if (context.parsed.y !== null) {
+                                label += "R$" + context.parsed.y.toFixed(2).replace(".", ",");
+                            }
+                            return label;
+                        }'),
                     ],
                 ],
             ],
         ];
-    }
-
-    protected function getType(): string
-    {
-        return 'line';
     }
 }
