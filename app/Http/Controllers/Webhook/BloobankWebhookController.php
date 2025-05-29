@@ -40,37 +40,45 @@ class BloobankWebhookController extends Controller
         DB::beginTransaction();
 
         try {
-            $valor = $transaction->amount;
+            $valor = $transaction->amount; // em centavos
+            $taxa = max(0, min(100, (float) ($user->taxa_cash_in ?? 0))); // defensivo
 
-            if ($status === 'approved') {
-                $taxa = (int) (($user->cashin_taxa / 100) * $valor);
-                $liquido = $valor - $taxa;
+            if ($status === 'approved' && $transaction->status !== 'paid') {
+                $desconto = (int) round($valor * ($taxa / 100));
+                $valorLiquido = $valor - $desconto;
 
-                $user->saldo += $liquido;
-                $user->save();
+                $user->increment('saldo', $valorLiquido);
 
-                $transaction->status = 'paid';
-                $transaction->save();
+                $transaction->update([
+                    'status' => 'paid',
+                ]);
 
-                Log::info("✅ Pagamento confirmado: $bloobankId | +$liquido (Taxa: $taxa)");
+                Log::info("✅ Pagamento confirmado Bloobank: $bloobankId", [
+                    'user_id' => $user->id,
+                    'valor_bruto' => $valor,
+                    'taxa' => $taxa,
+                    'desconto' => $desconto,
+                    'creditado' => $valorLiquido,
+                ]);
             }
 
-            if ($status === 'chargeback') {
-                $user->saldo -= $valor;
-                $user->save();
+            if ($status === 'chargeback' && $transaction->status !== 'chargeback') {
+                $user->decrement('saldo', $valor);
+                $transaction->update([
+                    'status' => 'chargeback',
+                ]);
 
-                $transaction->status = 'chargeback';
-                $transaction->save();
-
-                Log::warning("⚠️ Chargeback registrado: $bloobankId | -$valor");
+                Log::warning("⚠️ Chargeback Bloobank: $bloobankId", [
+                    'user_id' => $user->id,
+                    'valor_retirado' => $valor,
+                ]);
             }
 
             DB::commit();
-
             return response()->json(['success' => true]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error("Erro no webhook Bloobank: " . $e->getMessage());
+            Log::error("❌ Erro no webhook Bloobank: " . $e->getMessage());
             return response()->json(['error' => 'Erro interno'], 500);
         }
     }
