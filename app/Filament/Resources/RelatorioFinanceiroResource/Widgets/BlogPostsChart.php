@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class BlogPostsChart extends ChartWidget
 {
-    protected static ?string $heading = 'Faturamento por período';
-
+    protected static ?string $heading = '📈 Faturamento diário (R$)';
     protected int | string | array $columnSpan = 2;
 
     public ?string $startDate = null;
@@ -62,8 +61,11 @@ class BlogPostsChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Recebido',
+                    'label' => 'Faturamento',
                     'data' => $data->pluck('value'),
+                    'fill' => true,
+                    'borderWidth' => 2,
+                    'tension' => 0.4,
                 ],
             ],
             'labels' => $data->pluck('label'),
@@ -73,5 +75,29 @@ class BlogPostsChart extends ChartWidget
     protected function getType(): string
     {
         return 'line';
+    }
+
+    protected function getOptions(): ?array
+    {
+        return [
+            'plugins' => [
+                'tooltip' => [
+                    'callbacks' => [
+                        'label' => \Illuminate\Support\Js::from([
+                            'function(context) { return "R$ " + context.parsed.y.toLocaleString("pt-BR", {minimumFractionDigits: 2}); }'
+                        ]),
+                    ],
+                ],
+            ],
+            'scales' => [
+                'y' => [
+                    'ticks' => [
+                        'callback' => \Illuminate\Support\Js::from([
+                            'function(value) { return "R$ " + value.toLocaleString("pt-BR", {minimumFractionDigits: 2}); }'
+                        ]),
+                    ],
+                ],
+            ],
+        ];
     }
 }
