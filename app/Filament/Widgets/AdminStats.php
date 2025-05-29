@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\PixTransaction;
+use App\Models\WithdrawRequest;
 use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Card;
@@ -22,7 +23,7 @@ class AdminStats extends BaseWidget
             ];
         }
 
-        // saldo e bloqueado estão armazenados em centavos (inteiros)
+        // saldo e bloqueado armazenados em centavos
         $saldoCentavos = (int) $user->saldo;
         $bloqueadoCentavos = (int) $user->bloqueado;
         $disponivelCentavos = $saldoCentavos - $bloqueadoCentavos;
@@ -43,15 +44,14 @@ class AdminStats extends BaseWidget
             ->whereDate('created_at', now())
             ->get();
 
-        // Transações de saída (Cash OUT)
-        $cashOutHoje = PixTransaction::where('authkey', $user->authkey)
-            ->where('gtkey', $user->gtkey)
-            ->where('balance_type', 0)
-            ->whereDate('created_at', now())
-            ->get();
-
         $cashInSumHoje = $cashInHoje->sum('amount') / 100;
         $cashInCountHoje = $cashInHoje->count();
+
+        // Saques autorizados (Cash OUT)
+        $cashOutHoje = WithdrawRequest::where('user_id', $user->id)
+            ->where('status', 'autorizado')
+            ->whereDate('created_at', now())
+            ->get();
 
         $cashOutSumHoje = $cashOutHoje->sum('amount') / 100;
         $cashOutCountHoje = $cashOutHoje->count();
