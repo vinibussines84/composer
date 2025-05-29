@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class BlogPostsChart extends ChartWidget
 {
-    protected static ?string $heading = '📈 Faturamento diário (R$)';
+    protected static ?string $heading = '📊 Faturamento por Dia (R$)';
     protected int | string | array $columnSpan = 2;
 
     public ?string $startDate = null;
@@ -61,7 +61,7 @@ class BlogPostsChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Faturamento',
+                    'label' => 'Recebido (R$)',
                     'data' => $data->pluck('value'),
                     'fill' => true,
                     'borderWidth' => 2,
@@ -83,18 +83,25 @@ class BlogPostsChart extends ChartWidget
             'plugins' => [
                 'tooltip' => [
                     'callbacks' => [
-                        'label' => \Illuminate\Support\Js::from([
-                            'function(context) { return "R$ " + context.parsed.y.toLocaleString("pt-BR", {minimumFractionDigits: 2}); }'
-                        ]),
+                        'label' => 'function(context) {
+                            let valor = context.parsed.y ?? 0;
+                            return "R$ " + valor.toLocaleString("pt-BR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }',
                     ],
                 ],
             ],
             'scales' => [
                 'y' => [
                     'ticks' => [
-                        'callback' => \Illuminate\Support\Js::from([
-                            'function(value) { return "R$ " + value.toLocaleString("pt-BR", {minimumFractionDigits: 2}); }'
-                        ]),
+                        'callback' => 'function(value) {
+                            return "R$ " + value.toLocaleString("pt-BR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }',
                     ],
                 ],
             ],
