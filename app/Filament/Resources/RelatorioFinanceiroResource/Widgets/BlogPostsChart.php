@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Js;
 
 class BlogPostsChart extends ChartWidget
 {
@@ -53,7 +54,7 @@ class BlogPostsChart extends ChartWidget
 
             $data->push([
                 'label' => $date->format('d/m'),
-                'value' => $total / 100, // já convertido para reais
+                'value' => $total / 100, // reais
             ]);
         }
 
@@ -61,10 +62,10 @@ class BlogPostsChart extends ChartWidget
             'datasets' => [
                 [
                     'label' => 'Recebido',
-                    'data' => $data->pluck('value'),
+                    'data' => $data->pluck('value')->toArray(),
                 ],
             ],
-            'labels' => $data->pluck('label'),
+            'labels' => $data->pluck('label')->toArray(),
         ];
     }
 
@@ -76,26 +77,33 @@ class BlogPostsChart extends ChartWidget
     protected function getOptions(): ?array
     {
         return [
-            'scales' => [
-                'y' => [
-                    'ticks' => [
-                        'callback' => \Illuminate\Support\Js::from('function(value) { return "R$" + value.toFixed(2).replace(".", ","); }'),
-                    ],
-                ],
-            ],
+            'responsive' => true,
             'plugins' => [
                 'tooltip' => [
                     'callbacks' => [
-                        'label' => \Illuminate\Support\Js::from('function(context) {
-                            let label = context.dataset.label || "";
-                            if (label) {
-                                label += ": ";
+                        'label' => Js::from(<<<'JS'
+                            function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += 'R$' + context.parsed.y.toFixed(2).replace('.', ',');
+                                }
+                                return label;
                             }
-                            if (context.parsed.y !== null) {
-                                label += "R$" + context.parsed.y.toFixed(2).replace(".", ",");
+                        JS),
+                    ],
+                ],
+            ],
+            'scales' => [
+                'y' => [
+                    'ticks' => [
+                        'callback' => Js::from(<<<'JS'
+                            function(value) {
+                                return 'R$' + value.toFixed(2).replace('.', ',');
                             }
-                            return label;
-                        }'),
+                        JS),
                     ],
                 ],
             ],
