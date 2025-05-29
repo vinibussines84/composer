@@ -72,11 +72,11 @@ class PixTransactionResource extends Resource
 
                 TextColumn::make('created_at_api')
                     ->label('Data API')
-                    ->dateTime(),
+                    ->dateTime('d/m/Y H:i:s'),
 
                 TextColumn::make('created_at')
                     ->label('Recebido')
-                    ->since(),
+                    ->dateTime('d/m/Y H:i:s'),
             ])
             ->filters([
                 SelectFilter::make('status')
