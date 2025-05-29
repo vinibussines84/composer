@@ -32,7 +32,7 @@ class BalancesResource extends Resource
                     ->mask(RawJs::make('$money($input)'))
                     ->stripCharacters([',', '.'])
                     ->numeric()
-                    ->dehydrateStateUsing(fn ($state) => (int) str_replace(',', '', $state) * 100)
+                    ->dehydrateStateUsing(fn ($state) => (int) (float) str_replace(',', '.', $state) * 100)
                     ->formatStateUsing(fn ($state) => number_format($state / 100, 2, ',', '.')),
 
                 TextInput::make('bloqueado')
@@ -41,7 +41,7 @@ class BalancesResource extends Resource
                     ->mask(RawJs::make('$money($input)'))
                     ->stripCharacters([',', '.'])
                     ->numeric()
-                    ->dehydrateStateUsing(fn ($state) => (int) str_replace(',', '', $state) * 100)
+                    ->dehydrateStateUsing(fn ($state) => (int) (float) str_replace(',', '.', $state) * 100)
                     ->formatStateUsing(fn ($state) => number_format($state / 100, 2, ',', '.')),
             ]);
     }
