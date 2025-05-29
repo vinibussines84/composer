@@ -7,11 +7,11 @@ use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Js;
 
 class BlogPostsChart extends ChartWidget
 {
-    protected static ?string $heading = '📊 Faturamento por Período (R$)';
+    protected static ?string $heading = 'Faturamento por período';
+
     protected int | string | array $columnSpan = 2;
 
     public ?string $startDate = null;
@@ -43,8 +43,7 @@ class BlogPostsChart extends ChartWidget
         $start = $this->startDate ? Carbon::parse($this->startDate) : now()->subDays(6);
         $end = $this->endDate ? Carbon::parse($this->endDate) : now();
 
-        $labels = [];
-        $values = [];
+        $data = collect();
 
         for ($date = $start->copy(); $date <= $end; $date->addDay()) {
             $total = PixTransaction::query()
@@ -54,61 +53,25 @@ class BlogPostsChart extends ChartWidget
                 ->whereDate('created_at', $date->toDateString())
                 ->sum('amount');
 
-            $labels[] = $date->format('d/m');
-            $values[] = $total / 100; // já em reais
+            $data->push([
+                'label' => $date->format('d/m'),
+                'value' => $total / 100,
+            ]);
         }
 
         return [
             'datasets' => [
                 [
                     'label' => 'Recebido',
-                    'data' => $values,
-                    'fill' => true,
-                    'borderWidth' => 2,
+                    'data' => $data->pluck('value'),
                 ],
             ],
-            'labels' => $labels,
+            'labels' => $data->pluck('label'),
         ];
     }
 
     protected function getType(): string
     {
-        return 'line';
-    }
-
-    protected function getOptions(): ?array
-    {
-        return [
-            'responsive' => true,
-            'plugins' => [
-                'tooltip' => [
-                    'callbacks' => [
-                        'label' => Js::from(<<<'JS'
-                            function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== null) {
-                                    label += 'R$ ' + context.parsed.y.toFixed(2).replace('.', ',');
-                                }
-                                return label;
-                            }
-                        JS),
-                    ],
-                ],
-            ],
-            'scales' => [
-                'y' => [
-                    'ticks' => [
-                        'callback' => Js::from(<<<'JS'
-                            function(value) {
-                                return 'R$ ' + value.toFixed(2).replace('.', ',');
-                            }
-                        JS),
-                    ],
-                ],
-            ],
-        ];
+        return 'bar';
     }
 }
