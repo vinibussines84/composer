@@ -70,12 +70,8 @@ class PixTransactionResource extends Resource
                         default => 'gray',
                     }),
 
-                TextColumn::make('created_at_api')
-                    ->label('Data API')
-                    ->dateTime('d/m/Y H:i:s'),
-
                 TextColumn::make('created_at')
-                    ->label('Recebido')
+                    ->label('Criado em')
                     ->dateTime('d/m/Y H:i:s'),
             ])
             ->filters([
