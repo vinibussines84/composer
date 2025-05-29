@@ -40,8 +40,9 @@ class PixTransactionResource extends Resource
             ->columns([
                 TextColumn::make('txid')
                     ->label('TXID')
-                    ->searchable()
+                    ->formatStateUsing(fn ($record) => 'pixpay_trust' . ($record->id + 8938))
                     ->copyable()
+                    ->searchable()
                     ->limit(30),
 
                 TextColumn::make('amount')
