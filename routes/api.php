@@ -16,3 +16,4 @@ Route::post('/pix/webhook', [PixWebhookController::class, 'handle']);
 
 Route::post('/webhook/bloobank', [\App\Http\Controllers\Webhook\BloobankWebhookController::class, 'handle']);
 
+Route::post('/pix/status', [PixController::class, 'status']);

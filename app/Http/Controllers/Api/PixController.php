@@ -88,5 +88,23 @@ class PixController extends Controller
             return response()->json(['error' => 'Erro ao processar: ' . $e->getMessage()], 500);
         }
     }
+
+    public function status(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|string',
+        ]);
+
+        $transaction = PixTransaction::where('external_transaction_id', $request->input('id'))->first();
+
+        if (! $transaction) {
+            return response()->json(['error' => 'Transação não encontrada'], 404);
+        }
+
+        return response()->json([
+            'id' => $transaction->external_transaction_id,
+            'status' => $transaction->status,
+            'amount' => number_format($transaction->amount / 100, 2, '.', ''),
+        ]);
+    }
 }
-//k
