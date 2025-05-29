@@ -35,7 +35,9 @@ class AdminStats extends BaseWidget
         $disponivelDescricao = $disponivel > 0
             ? 'Disponível para saque.'
             : 'Conta ativa.';
-        $disponivelCor = $disponivel > 0 ? 'success' : 'danger';
+        $disponivelCor = $disponivel > 0 ? 'success' : 'danger'; 
+
+        //ok
 
         // Transações com status "paid" (Cash IN)
         $cashInHoje = PixTransaction::where('authkey', $user->authkey)
