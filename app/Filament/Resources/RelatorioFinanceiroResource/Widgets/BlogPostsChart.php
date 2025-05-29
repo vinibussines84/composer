@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Auth;
 
 class BlogPostsChart extends ChartWidget
 {
-    protected static ?string $heading = '📊 Faturamento por Dia (R$)';
+    protected static ?string $heading = 'Faturamento por período';
+
     protected int | string | array $columnSpan = 2;
 
     public ?string $startDate = null;
@@ -61,11 +62,8 @@ class BlogPostsChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Recebido (R$)',
+                    'label' => 'Recebido',
                     'data' => $data->pluck('value'),
-                    'fill' => true,
-                    'borderWidth' => 2,
-                    'tension' => 0.4,
                 ],
             ],
             'labels' => $data->pluck('label'),
@@ -74,39 +72,6 @@ class BlogPostsChart extends ChartWidget
 
     protected function getType(): string
     {
-        return 'line'; // Se quiser barras, troque por 'bar'
-    }
-
-    protected function getOptions(): ?array
-    {
-        return [
-            'responsive' => true,
-            'plugins' => [
-                'tooltip' => [
-                    'enabled' => true,
-                    'callbacks' => [
-                        'label' => 'function(context) {
-                            const valor = context.raw || 0;
-                            return "Recebido: R$ " + valor.toLocaleString("pt-BR", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            });
-                        }',
-                    ],
-                ],
-            ],
-            'scales' => [
-                'y' => [
-                    'ticks' => [
-                        'callback' => 'function(value) {
-                            return "R$ " + value.toLocaleString("pt-BR", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            });
-                        }',
-                    ],
-                ],
-            ],
-        ];
+        return 'line';
     }
 }
