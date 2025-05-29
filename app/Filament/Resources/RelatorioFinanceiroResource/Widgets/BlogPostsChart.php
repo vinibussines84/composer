@@ -29,6 +29,7 @@ class BlogPostsChart extends ChartWidget
             DatePicker::make('startDate')
                 ->label('Data inicial')
                 ->reactive(),
+
             DatePicker::make('endDate')
                 ->label('Data final')
                 ->reactive(),
@@ -42,7 +43,8 @@ class BlogPostsChart extends ChartWidget
         $start = $this->startDate ? Carbon::parse($this->startDate) : now()->subDays(6);
         $end = $this->endDate ? Carbon::parse($this->endDate) : now();
 
-        $data = collect();
+        $labels = [];
+        $values = [];
 
         for ($date = $start->copy(); $date <= $end; $date->addDay()) {
             $total = PixTransaction::query()
@@ -52,20 +54,20 @@ class BlogPostsChart extends ChartWidget
                 ->whereDate('created_at', $date->toDateString())
                 ->sum('amount');
 
-            $data->push([
-                'label' => $date->format('d/m'),
-                'value' => $total / 100, // reais
-            ]);
+            $labels[] = $date->format('d/m');
+            $values[] = $total / 100; // já em reais
         }
 
         return [
             'datasets' => [
                 [
                     'label' => 'Recebido',
-                    'data' => $data->pluck('value')->toArray(),
+                    'data' => $values,
+                    'fill' => true,
+                    'borderWidth' => 2,
                 ],
             ],
-            'labels' => $data->pluck('label')->toArray(),
+            'labels' => $labels,
         ];
     }
 
@@ -88,7 +90,7 @@ class BlogPostsChart extends ChartWidget
                                     label += ': ';
                                 }
                                 if (context.parsed.y !== null) {
-                                    label += 'R$' + context.parsed.y.toFixed(2).replace('.', ',');
+                                    label += 'R$ ' + context.parsed.y.toFixed(2).replace('.', ',');
                                 }
                                 return label;
                             }
@@ -101,7 +103,7 @@ class BlogPostsChart extends ChartWidget
                     'ticks' => [
                         'callback' => Js::from(<<<'JS'
                             function(value) {
-                                return 'R$' + value.toFixed(2).replace('.', ',');
+                                return 'R$ ' + value.toFixed(2).replace('.', ',');
                             }
                         JS),
                     ],
