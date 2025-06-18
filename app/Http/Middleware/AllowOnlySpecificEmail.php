@@ -8,14 +8,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AllowOnlySpecificEmail
 {
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     */
     public function handle(Request $request, Closure $next): Response
     {
-        $allowedEmail = 'vanessamorada@gmail.com';
-
-        if (!auth()->check() || auth()->user()->email !== $allowedEmail) {
-            abort(403, 'Acesso negado');
-        }
-
         return $next($request);
     }
 }

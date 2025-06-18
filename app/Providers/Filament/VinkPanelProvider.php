@@ -51,11 +51,6 @@ class VinkPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-
-                // ✅ Bloqueio de acesso apenas para o e-mail desejado:
-                fn ($request, $next) => (auth()->check() && auth()->user()->email === 'emailpermitido@dominio.com')
-                    ? $next($request)
-                    : abort(403, 'Acesso restrito apenas ao e-mail autorizado.'),
             ]);
     }
 }
