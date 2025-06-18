@@ -62,9 +62,13 @@ class TransactionList extends BaseWidget
                     ->limit(10)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('external_transaction_id')
-                    ->label('ID')
-                    ->color('white'),
+                Tables\Columns\TextColumn::make('end_to_end_id')
+                    ->label('E2E')
+                    ->color('white')
+                    ->copyable()
+                    ->formatStateUsing(function ($state) {
+                        return $state ?: '-';
+                    }),
 
                 Tables\Columns\TextColumn::make('user_name')
                     ->label('Usuário')
@@ -91,11 +95,6 @@ class TransactionList extends BaseWidget
                         'R$ ' . number_format((abs($record->amount) / 100) * ($record->taxa / 100), 2, ',', '.')
                     )
                     ->color('white'),
-
-                Tables\Columns\TextColumn::make('end_to_end_id')
-                    ->label('E2E')
-                    ->color('white')
-                    ->copyable(),
 
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')

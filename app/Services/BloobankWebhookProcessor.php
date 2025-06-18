@@ -48,6 +48,7 @@ class BloobankWebhookProcessor
 
                 $transaction->update([
                     'status' => 'paid',
+                    'end_to_end_id' => $body['pix']['endToEndId'] ?? null, // Atualizando o E2E
                 ]);
 
                 Log::info("✅ Pagamento aprovado manualmente: $bloobankId", [
@@ -56,6 +57,7 @@ class BloobankWebhookProcessor
                     'taxa' => $taxa,
                     'desconto' => $desconto,
                     'creditado' => $valorLiquido,
+                    'e2e' => $body['pix']['endToEndId'] ?? null,
                 ]);
             }
 
