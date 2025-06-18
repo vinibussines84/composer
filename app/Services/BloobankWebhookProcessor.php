@@ -11,12 +11,14 @@ class BloobankWebhookProcessor
 {
     public function process(array $data): void
     {
-        if (! isset($data['id'], $data['status'])) {
+        $body = $data['body'] ?? null;
+
+        if (! $body || ! isset($body['id'], $body['status'])) {
             throw new \Exception('Payload inválido: campos obrigatórios ausentes.');
         }
 
-        $status = $data['status'];
-        $bloobankId = $data['id'];
+        $status = $body['status'];
+        $bloobankId = $body['id'];
 
         $transaction = PixTransaction::where('external_transaction_id', $bloobankId)->first();
 
