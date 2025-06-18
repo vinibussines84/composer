@@ -12,10 +12,13 @@ class BloobankService
 
     public function __construct()
     {
-        $this->accessKey  = 'BZxvFBwBUftDm1Kf9RPDGAv598WseiyyLZZpv46J2BTA';
+        $this->accessKey  = 'BZxvFBwBUftDm1Kf9RPDGAv598WseiyyLZZpv46J2BTA'; // Substitua pela sua real
         $this->privateKey = file_get_contents(storage_path('bloobank/privateKey.pem'));
     }
 
+    /**
+     * Cria um pagamento Pix (Cobrança)
+     */
     public function createPixPayment(array $user, int $amountInCents): array
     {
         // 📞 Formata o telefone para +55XXXXXXXXXXX
@@ -43,7 +46,7 @@ class BloobankService
             'installments' => 1,
             'metadata' => [
                 'user_id' => $user['id'] ?? null,
-                'via' => 'api_pix_tb3'
+                'via' => 'TrustGateway'
             ],
         ];
 
@@ -56,6 +59,30 @@ class BloobankService
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
         ])->post('https://payment.blooapis.io/v1/payments', $payload);
+
+        return [
+            'status' => $response->status(),
+            'ok' => $response->ok(),
+            'body' => $response->body(),
+            'json' => $response->json(),
+            'headers' => $response->headers(),
+        ];
+    }
+
+    /**
+     * Envia um payout (saque Pix)
+     */
+    public function createPayout(array $payload): array
+    {
+        $auth = BloobankAuth::generateSignature($this->accessKey, $this->privateKey, $payload);
+
+        $response = Http::withHeaders([
+            'X-Access-Key' => $this->accessKey,
+            'X-Access-Timestamp' => $auth['timestamp'],
+            'X-Access-Signature' => $auth['signature'],
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ])->post('https://payment.blooapis.io/v1/payouts', $payload);
 
         return [
             'status' => $response->status(),
