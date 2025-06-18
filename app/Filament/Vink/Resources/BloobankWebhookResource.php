@@ -45,6 +45,30 @@ class BloobankWebhookResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable(),
+
+                Tables\Columns\TextColumn::make('nickname')
+                    ->label('Nickname')
+                    ->getStateUsing(function (BloobankWebhook $record) {
+                        $data = json_decode($record->payload, true);
+                        return $data['body']['customer']['nickname'] ?? '-';
+                    }),
+
+                Tables\Columns\TextColumn::make('transaction_id')
+                    ->label('Transaction ID')
+                    ->getStateUsing(function (BloobankWebhook $record) {
+                        $data = json_decode($record->payload, true);
+                        return $data['body']['id'] ?? '-';
+                    }),
+
+                Tables\Columns\TextColumn::make('amount')
+                    ->label('Amount (Value)')
+                    ->getStateUsing(function (BloobankWebhook $record) {
+                        $data = json_decode($record->payload, true);
+                        return isset($data['body']['amount']['value']) 
+                            ? number_format($data['body']['amount']['value'] / 100, 2, ',', '.') . ' BRL'
+                            : '-';
+                    }),
+
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state) => match ($state) {
@@ -53,6 +77,7 @@ class BloobankWebhookResource extends Resource
                         'error' => 'danger',
                         default => 'gray',
                     }),
+
                 Tables\Columns\TextColumn::make('created_at')->since(),
             ])
             ->actions([
