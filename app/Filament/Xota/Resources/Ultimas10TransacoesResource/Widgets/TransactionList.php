@@ -35,7 +35,8 @@ class TransactionList extends BaseWidget
                             END AS taxa,
                             pt.status,
                             pt.created_at AS created_at_api,
-                            'pix' AS origem
+                            'pix' AS origem,
+                            pt.end_to_end_id
                         FROM pix_transactions pt
                         JOIN users u ON u.id = pt.user_id
                         WHERE pt.balance_type != 1 OR (pt.balance_type = 1 AND pt.status = 'paid')
@@ -52,7 +53,8 @@ class TransactionList extends BaseWidget
                             u.taxa_cash_out AS taxa,
                             wr.status,
                             wr.created_at AS created_at_api,
-                            'withdraw' AS origem
+                            'withdraw' AS origem,
+                            NULL AS end_to_end_id
                         FROM withdraw_requests wr
                         JOIN users u ON u.id = wr.user_id
                     ) as unified_transactions")
@@ -89,6 +91,11 @@ class TransactionList extends BaseWidget
                         'R$ ' . number_format((abs($record->amount) / 100) * ($record->taxa / 100), 2, ',', '.')
                     )
                     ->color('white'),
+
+                Tables\Columns\TextColumn::make('end_to_end_id')
+                    ->label('E2E')
+                    ->color('white')
+                    ->copyable(),
 
                 Tables\Columns\IconColumn::make('status')
                     ->label('Status')
