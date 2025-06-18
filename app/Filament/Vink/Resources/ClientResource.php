@@ -1,64 +1,68 @@
 <?php
 
-namespace App\Filament\Vink\Resources;
+namespace App\Filament\Resources;
 
-use App\Filament\Vink\Resources\ClientResource\Pages;
-use App\Filament\Vink\Resources\ClientResource\RelationManagers;
-use App\Models\Client;
+use App\Filament\Resources\BloobankWebhookResource\Pages;
+use App\Models\BloobankWebhook;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Actions\Action;
 
-class ClientResource extends Resource
+class BloobankWebhookResource extends Resource
 {
-    protected static ?string $model = Client::class;
+    protected static ?string $model = BloobankWebhook::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-bolt';
 
-    public static function form(Form $form): Form
+    protected static ?string $navigationGroup = 'Vink';  // <<< Aqui define o grupo de menu
+
+    protected static ?string $navigationLabel = 'Webhooks Bloobank';
+
+    public static function form(Forms\Form $form): Forms\Form
     {
         return $form
             ->schema([
-                //
+                Forms\Components\Textarea::make('payload')->disabled(),
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'processed' => 'Processed',
+                        'error' => 'Error',
+                    ])
+                    ->disabled(),
             ]);
     }
 
-    public static function table(Table $table): Table
+    public static function table(Tables\Table $table): Tables\Table
     {
         return $table
             ->columns([
-                //
-            ])
-            ->filters([
-                //
+                Tables\Columns\TextColumn::make('id')->sortable(),
+                Tables\Columns\TextColumn::make('status')->badge(),
+                Tables\Columns\TextColumn::make('created_at')->dateTime(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Action::make('Aprovar e Processar')
+                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->action(function ($record) {
+                        try {
+                            $payload = json_decode($record->payload, true);
+                            $data = $payload['body'] ?? [];
+                            app(\App\Services\BloobankWebhookProcessor::class)->process($data);
+                            $record->update(['status' => 'processed']);
+                        } catch (\Throwable $e) {
+                            $record->update(['status' => 'error']);
+                            \Log::error('Erro ao processar webhook manual: ' . $e->getMessage());
+                        }
+                    }),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListClients::route('/'),
-            'create' => Pages\CreateClient::route('/create'),
-            'edit' => Pages\EditClient::route('/{record}/edit'),
+            'index' => Pages\ListBloobankWebhooks::route('/'),
         ];
     }
 }
