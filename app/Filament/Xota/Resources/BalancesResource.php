@@ -31,7 +31,7 @@ class BalancesResource extends Resource
                     ->prefix('R$')
                     ->mask(RawJs::make('$money($input)'))
                     ->numeric()
-                    ->dehydrateStateUsing(fn ($state) => {
+                    ->dehydrateStateUsing(function ($state) {
                         $cleaned = preg_replace('/[^0-9,\.]/', '', $state);
 
                         if (strpos($cleaned, ',') !== false) {
@@ -50,7 +50,7 @@ class BalancesResource extends Resource
                     ->prefix('R$')
                     ->mask(RawJs::make('$money($input)'))
                     ->numeric()
-                    ->dehydrateStateUsing(fn ($state) => {
+                    ->dehydrateStateUsing(function ($state) {
                         $cleaned = preg_replace('/[^0-9,\.]/', '', $state);
 
                         if (strpos($cleaned, ',') !== false) {
