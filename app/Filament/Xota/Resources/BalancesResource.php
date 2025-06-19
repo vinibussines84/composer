@@ -30,18 +30,38 @@ class BalancesResource extends Resource
                     ->label('Saldo')
                     ->prefix('R$')
                     ->mask(RawJs::make('$money($input)'))
-                    ->stripCharacters(['.'])
                     ->numeric()
-                    ->dehydrateStateUsing(fn ($state) => (int) (float) str_replace(',', '.', str_replace('.', '', $state)) * 100)
+                    ->dehydrateStateUsing(fn ($state) => {
+                        $cleaned = preg_replace('/[^0-9,\.]/', '', $state);
+
+                        if (strpos($cleaned, ',') !== false) {
+                            $cleaned = str_replace('.', '', $cleaned);
+                            $cleaned = str_replace(',', '.', $cleaned);
+                        } else {
+                            $cleaned = str_replace(',', '', $cleaned);
+                        }
+
+                        return (int) round(floatval($cleaned) * 100);
+                    })
                     ->formatStateUsing(fn ($state) => number_format($state / 100, 2, ',', '.')),
 
                 TextInput::make('bloqueado')
                     ->label('Bloqueado')
                     ->prefix('R$')
                     ->mask(RawJs::make('$money($input)'))
-                    ->stripCharacters(['.'])
                     ->numeric()
-                    ->dehydrateStateUsing(fn ($state) => (int) (float) str_replace(',', '.', str_replace('.', '', $state)) * 100)
+                    ->dehydrateStateUsing(fn ($state) => {
+                        $cleaned = preg_replace('/[^0-9,\.]/', '', $state);
+
+                        if (strpos($cleaned, ',') !== false) {
+                            $cleaned = str_replace('.', '', $cleaned);
+                            $cleaned = str_replace(',', '.', $cleaned);
+                        } else {
+                            $cleaned = str_replace(',', '', $cleaned);
+                        }
+
+                        return (int) round(floatval($cleaned) * 100);
+                    })
                     ->formatStateUsing(fn ($state) => number_format($state / 100, 2, ',', '.')),
             ]);
     }
