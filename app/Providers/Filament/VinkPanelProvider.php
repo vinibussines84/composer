@@ -11,12 +11,16 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets;
+
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+
+// Adiciona o middleware CheckXotaAccess
+use App\Http\Middleware\CheckXotaAccess;
 
 class VinkPanelProvider extends PanelProvider
 {
@@ -28,12 +32,23 @@ class VinkPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->discoverResources(in: app_path('Filament/Vink/Resources'), for: 'App\\Filament\\Vink\\Resources')
-            ->discoverPages(in: app_path('Filament/Vink/Pages'), for: 'App\\Filament\\Vink\\Pages')
+            ->authGuard('web') // mesmo guard do painel Xota
+            ->login() // usa a rota de login padrão
+            ->discoverResources(
+                in: app_path('Filament/Vink/Resources'),
+                for: 'App\\Filament\\Vink\\Resources'
+            )
+            ->discoverPages(
+                in: app_path('Filament/Vink/Pages'),
+                for: 'App\\Filament\\Vink\\Pages'
+            )
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Vink/Widgets'), for: 'App\\Filament\\Vink\\Widgets')
+            ->discoverWidgets(
+                in: app_path('Filament/Vink/Widgets'),
+                for: 'App\\Filament\\Vink\\Widgets'
+            )
             ->widgets([
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
@@ -51,6 +66,7 @@ class VinkPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                CheckXotaAccess::class, // ✅ Aqui está o middleware incluído
             ]);
     }
 }
