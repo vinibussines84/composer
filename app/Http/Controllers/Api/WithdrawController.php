@@ -37,7 +37,7 @@ class WithdrawController extends Controller
             return response()->json(['error' => 'Saldo insuficiente'], 400);
         }
 
-        // Cria a requisição de saque com status pendente
+        // Criar a requisição de saque pendente
         $withdrawRequest = WithdrawRequest::create([
             'user_id' => $user->id,
             'amount' => $amountInCents,
@@ -48,26 +48,27 @@ class WithdrawController extends Controller
 
         $bloobank = app(BloobankService::class);
 
-        // Monta payload conforme especificação Bloobank
         $payload = [
-            'trxid' => 'saque-' . $withdrawRequest->id . '-' . uniqid(),
-            'method' => 'pix',
+            'trxid' => substr('saque-' . $withdrawRequest->id . '-' . uniqid(), 0, 36),
+            'method' => 'BANKING_WITHDRAW_PIX',
             'amount' => [
                 'value' => $amountInCents,
             ],
-            'pix' => [
-                'key' => $withdrawRequest->pix_key,
-                'type' => $withdrawRequest->pix_type,
-                'name' => $user->name ?? 'TrustGateway',
+            'bankAccount' => [
+                'accountOwnerDocument' => $user->cpf ?? '00000000000', // Substitua pelo CPF/CNPJ real
+                'pixKeyType' => $withdrawRequest->pix_type,
+                'pixKeyValue' => $withdrawRequest->pix_key,
             ],
-            'description' => 'Saque via API',
-            'externalReference' => 'saque-' . $withdrawRequest->id,
+            'metadata' => [
+                'externalReference' => 'saque-' . $withdrawRequest->id,
+                'description' => 'Saque via API',
+            ],
         ];
 
         $response = $bloobank->createPayout($payload);
 
         if ($response['ok']) {
-            // Atualiza status para autorizado e decrementa saldo
+            // Atualiza status e saldo
             $withdrawRequest->update(['status' => 'autorizado']);
             $user->decrement('saldo', $amountInCents);
 
@@ -76,7 +77,7 @@ class WithdrawController extends Controller
                 'bloobank_response' => $response['json'],
             ]);
         } else {
-            // Em caso de falha, atualiza status para cancelado
+            // Atualiza status para cancelado
             $withdrawRequest->update(['status' => 'cancelado']);
 
             return response()->json([
