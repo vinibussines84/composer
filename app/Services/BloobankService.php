@@ -31,15 +31,15 @@ class BloobankService
             'amount' => [
                 'value' => $amountInCents
             ],
-            'customer' => array_filter([
+            'customer' => [
                 'doc' => [
                     'type' => 'CPF',
                     'value' => '14493030054',
                 ],
-                // 'name' => null, // Removido do payload
+                'name' => 'TrustGateway', // Nome artificial fixo exigido pela API
                 'phone' => $formattedPhone,
-                // 'email' => null, // Removido do payload
-            ]),
+                'email' => null, // Pode ser removido se a API rejeitar null
+            ],
             'pix' => [
                 'expiresIn' => 600
             ],
