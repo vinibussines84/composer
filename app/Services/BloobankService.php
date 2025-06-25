@@ -31,15 +31,15 @@ class BloobankService
             'amount' => [
                 'value' => $amountInCents
             ],
-            'customer' => [
+            'customer' => array_filter([
                 'doc' => [
                     'type' => 'CPF',
                     'value' => '14493030054',
                 ],
-                'name' => $user['name'] ?? 'Usuário Pix',
+                // 'name' => null, // Removido do payload
                 'phone' => $formattedPhone,
-                'email' => $user['email'] ?? 'sem-email@exemplo.com',
-            ],
+                // 'email' => null, // Removido do payload
+            ]),
             'pix' => [
                 'expiresIn' => 600
             ],
