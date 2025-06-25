@@ -31,13 +31,13 @@ class WithdrawController extends Controller
             'amount' => 'required|numeric|min:0.01',
         ]);
 
-        $amountInCents = intval($request->input('amount') * 100);
+        $amountInCents = intval(round($request->input('amount') * 100));
 
         if ($user->saldo < $amountInCents) {
             return response()->json(['error' => 'Saldo insuficiente'], 400);
         }
 
-        // Criar a requisição de saque pendente
+        // Cria a requisição de saque com status pendente
         $withdrawRequest = WithdrawRequest::create([
             'user_id' => $user->id,
             'amount' => $amountInCents,
@@ -48,7 +48,10 @@ class WithdrawController extends Controller
 
         $bloobank = app(BloobankService::class);
 
+        // Monta payload conforme especificação Bloobank
         $payload = [
+            'trxid' => 'saque-' . $withdrawRequest->id . '-' . uniqid(),
+            'method' => 'pix',
             'amount' => [
                 'value' => $amountInCents,
             ],
@@ -64,7 +67,7 @@ class WithdrawController extends Controller
         $response = $bloobank->createPayout($payload);
 
         if ($response['ok']) {
-            // Atualiza status e saldo
+            // Atualiza status para autorizado e decrementa saldo
             $withdrawRequest->update(['status' => 'autorizado']);
             $user->decrement('saldo', $amountInCents);
 
@@ -73,7 +76,7 @@ class WithdrawController extends Controller
                 'bloobank_response' => $response['json'],
             ]);
         } else {
-            // Atualiza status para cancelado
+            // Em caso de falha, atualiza status para cancelado
             $withdrawRequest->update(['status' => 'cancelado']);
 
             return response()->json([
