@@ -30,7 +30,7 @@ class ListBloobankWebhooks extends ListRecords
                     $this->redirect($this->getUrl());
                 })
                 ->color(Cache::get('bloobank_auto_process', false) ? 'danger' : 'success')
-                ->icon(Cache::get('bloobank_auto_process', false) ? 'heroicon-o-x' : 'heroicon-o-check'),
+                ->icon(Cache::get('bloobank_auto_process', false) ? 'heroicon-o-x-mark' : 'heroicon-o-check'),
         ];
     }
 }
