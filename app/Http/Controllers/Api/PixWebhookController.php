@@ -30,7 +30,6 @@ class PixWebhookController extends Controller
 
         $oldStatus = $transaction->status;
 
-        // ✅ Se já está como "paid", ignora tudo
         if ($oldStatus === 'paid' && $newStatus === 'paid') {
             Log::info('Webhook ignorado: transação já está como paga.', [
                 'external_id' => $externalId,
@@ -39,7 +38,6 @@ class PixWebhookController extends Controller
             return response()->json(['success' => true]);
         }
 
-        // ✅ Atualiza status se for diferente
         if ($oldStatus !== $newStatus) {
             $transaction->update([
                 'status' => $newStatus,
@@ -59,18 +57,34 @@ class PixWebhookController extends Controller
             $taxa  = $user->taxa_cash_in ?? 0;
 
             if ($newStatus === 'paid' && $oldStatus !== 'paid') {
-                // ✅ Credita apenas uma vez
-                $valorLiquido  = $valor - ($valor * ($taxa / 100));
+                // Calcula taxas
+                $taxaPercentual = $valor * ($taxa / 100);
+                $descontoFixo = 10; // R$10,00
+                $valorLiquido = $valor - $taxaPercentual - $descontoFixo;
                 $valorCentavos = intval(round($valorLiquido * 100));
 
+                // Evita valor negativo
+                if ($valorCentavos < 0) {
+                    $valorCentavos = 0;
+                }
+
+                // Credita valor líquido para o usuário
                 $user->increment('saldo', $valorCentavos);
 
-                Log::info('💰 PIX creditado com taxa', [
+                // Repassa R$10 (1000 centavos) para conta central
+                $central = \App\Models\User::where('is_central', true)->first();
+                if ($central) {
+                    $central->increment('saldo', 1000);
+                }
+
+                Log::info('💰 PIX creditado com taxa e desconto fixo de R$10', [
                     'valor_bruto'            => $valor,
-                    'taxa'                   => $taxa,
+                    'taxa_percentual'        => $taxaPercentual,
                     'valor_liquido'          => $valorLiquido,
                     'adicionado_em_centavos' => $valorCentavos,
                     'user_id'                => $user->id,
+                    'repasse_para_central'   => true,
+                    'central_id'             => $central?->id,
                 ]);
             }
 

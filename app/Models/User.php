@@ -31,6 +31,7 @@ class User extends Authenticatable implements FilamentUser
         'saldo',
         'bloqueado',
         'dashrash',
+        'is_central', // ✅ adicionado aqui
     ];
 
     protected $hidden = [
@@ -46,6 +47,7 @@ class User extends Authenticatable implements FilamentUser
         'cashin_ativo' => 'boolean',
         'cashout_ativo' => 'boolean',
         'dashrash' => 'boolean',
+        'is_central' => 'boolean', // ✅ adicionado aqui
         'saldo' => 'decimal:2',
         'bloqueado' => 'decimal:2',
     ];
