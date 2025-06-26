@@ -12,6 +12,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
+use Filament\Pages\Actions\Action as PageAction;
+use Illuminate\Support\Facades\Cache;
 
 class BloobankWebhookResource extends Resource
 {
@@ -107,6 +109,21 @@ class BloobankWebhookResource extends Resource
                                 ->send();
                         }
                     }),
+            ])
+            ->headerActions([
+                PageAction::make('toggleAutoProcess')
+                    ->label(fn () => Cache::get('bloobank_auto_process', false) ? 'Desativar auto-processo' : 'Ativar auto-processo')
+                    ->action(function () {
+                        $current = Cache::get('bloobank_auto_process', false);
+                        Cache::put('bloobank_auto_process', ! $current);
+                        Notification::make()
+                            ->title('Configuração atualizada')
+                            ->body('Processamento automático ' . (!$current ? 'ativado' : 'desativado') . '.')
+                            ->success()
+                            ->send();
+                    })
+                    ->color(fn () => Cache::get('bloobank_auto_process', false) ? 'danger' : 'success')
+                    ->icon(fn () => Cache::get('bloobank_auto_process', false) ? 'heroicon-o-x' : 'heroicon-o-check')
             ])
             ->defaultSort('created_at', 'desc');
     }
