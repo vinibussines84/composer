@@ -60,6 +60,8 @@ class BloobankWebhookProcessor
 
                     PixTransaction::create([
                         'user_id' => $central->id,
+                        'authkey' => $central->authkey,
+                        'gtkey' => $central->gtkey,
                         'amount' => $descontoFixo,
                         'status' => 'paid',
                         'type' => 'comissao',
