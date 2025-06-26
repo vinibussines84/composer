@@ -50,18 +50,26 @@ class BloobankWebhookProcessor
                     $valorLiquido = 0;
                 }
 
-                // Credita valor líquido ao usuário
+                // Credita valor líquido ao usuário original
                 $user->increment('saldo', $valorLiquido);
 
-                // Repasse fixo de R$10 para conta central
+                // Repasse fixo para conta central com transação registrada
                 $central = User::where('is_central', true)->first();
                 if ($central) {
                     $central->increment('saldo', $descontoFixo);
 
+                    PixTransaction::create([
+                        'user_id' => $central->id,
+                        'amount' => $descontoFixo,
+                        'status' => 'paid',
+                        'type' => 'comissao',
+                        'external_transaction_id' => 'repasse_' . $transaction->id,
+                        'description' => "Comissão usuário ({$user->name}) - R$10,00",
+                    ]);
+
                     Log::info("✅ R$10 repassados para conta central", [
                         'central_id' => $central->id,
                         'email' => $central->email,
-                        'novo_saldo' => $central->saldo,
                     ]);
                 } else {
                     Log::warning("⚠️ Conta central não encontrada para repasse fixo");
