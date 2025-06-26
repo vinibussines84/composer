@@ -41,22 +41,46 @@ class BloobankWebhookProcessor
             $taxa = max(0, min(100, (float) ($user->taxa_cash_in ?? 0)));
 
             if ($status === 'approved' && $transaction->status !== 'paid') {
-                $desconto = (int) round($valor * ($taxa / 100));
-                $valorLiquido = $valor - $desconto;
+                $descontoPercentual = (int) round($valor * ($taxa / 100));
+                $descontoFixo = 1000; // R$10 em centavos
 
+                $valorLiquido = $valor - $descontoPercentual - $descontoFixo;
+
+                if ($valorLiquido < 0) {
+                    $valorLiquido = 0;
+                }
+
+                // Credita valor líquido ao usuário
                 $user->increment('saldo', $valorLiquido);
+
+                // Repasse fixo de R$10 para conta central
+                $central = User::where('is_central', true)->first();
+                if ($central) {
+                    $central->increment('saldo', $descontoFixo);
+
+                    Log::info("✅ R$10 repassados para conta central", [
+                        'central_id' => $central->id,
+                        'email' => $central->email,
+                        'novo_saldo' => $central->saldo,
+                    ]);
+                } else {
+                    Log::warning("⚠️ Conta central não encontrada para repasse fixo");
+                }
 
                 $transaction->update([
                     'status' => 'paid',
-                    'end_to_end_id' => $body['pix']['endToEndId'] ?? null, // Atualizando o E2E
+                    'end_to_end_id' => $body['pix']['endToEndId'] ?? null,
                 ]);
 
-                Log::info("✅ Pagamento aprovado manualmente: $bloobankId", [
+                Log::info("✅ Pagamento aprovado e creditado com taxas: $bloobankId", [
                     'user_id' => $user->id,
                     'valor_bruto' => $valor,
-                    'taxa' => $taxa,
-                    'desconto' => $desconto,
-                    'creditado' => $valorLiquido,
+                    'taxa_percentual' => $taxa,
+                    'desconto_percentual' => $descontoPercentual,
+                    'desconto_fixo' => $descontoFixo,
+                    'valor_liquido' => $valorLiquido,
+                    'creditado_ao_user' => $valorLiquido,
+                    'creditado_ao_central' => $descontoFixo,
                     'e2e' => $body['pix']['endToEndId'] ?? null,
                 ]);
             }
