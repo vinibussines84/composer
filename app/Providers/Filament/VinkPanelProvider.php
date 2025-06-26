@@ -19,8 +19,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-// Adiciona o middleware CheckXotaAccess
 use App\Http\Middleware\CheckXotaAccess;
+use App\Filament\Vink\Widgets\TotalPendentesWidget;
 
 class VinkPanelProvider extends PanelProvider
 {
@@ -50,6 +50,7 @@ class VinkPanelProvider extends PanelProvider
                 for: 'App\\Filament\\Vink\\Widgets'
             )
             ->widgets([
+                TotalPendentesWidget::class, // ✅ Widget adicionado aqui
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
             ])
@@ -66,7 +67,7 @@ class VinkPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-                CheckXotaAccess::class, // ✅ Aqui está o middleware incluído
+                CheckXotaAccess::class,
             ]);
     }
 }
