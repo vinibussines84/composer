@@ -53,28 +53,35 @@ class PixWebhookController extends Controller
         $user = $transaction->user;
 
         if ($user) {
-            $valor = $transaction->amount / 100; // valor em reais
+            $valor = $transaction->amount / 100; // em reais
             $taxa  = $user->taxa_cash_in ?? 0;
 
             if ($newStatus === 'paid' && $oldStatus !== 'paid') {
-                // Calcula taxas
+                // Desconta taxa percentual + R$10 fixo
                 $taxaPercentual = $valor * ($taxa / 100);
-                $descontoFixo = 10; // R$10,00
+                $descontoFixo = 10;
                 $valorLiquido = $valor - $taxaPercentual - $descontoFixo;
                 $valorCentavos = intval(round($valorLiquido * 100));
 
-                // Evita valor negativo
                 if ($valorCentavos < 0) {
                     $valorCentavos = 0;
                 }
 
-                // Credita valor líquido para o usuário
+                // Credita valor líquido ao usuário
                 $user->increment('saldo', $valorCentavos);
 
-                // Repassa R$10 (1000 centavos) para conta central
+                // Repasse fixo de R$10 para conta central
                 $central = \App\Models\User::where('is_central', true)->first();
                 if ($central) {
                     $central->increment('saldo', 1000);
+
+                    Log::info('✅ R$10 repassados para conta central', [
+                        'central_id' => $central->id,
+                        'email' => $central->email,
+                        'novo_saldo' => $central->saldo,
+                    ]);
+                } else {
+                    Log::warning('⚠️ Conta central não encontrada para repasse');
                 }
 
                 Log::info('💰 PIX creditado com taxa e desconto fixo de R$10', [
@@ -83,8 +90,6 @@ class PixWebhookController extends Controller
                     'valor_liquido'          => $valorLiquido,
                     'adicionado_em_centavos' => $valorCentavos,
                     'user_id'                => $user->id,
-                    'repasse_para_central'   => true,
-                    'central_id'             => $central?->id,
                 ]);
             }
 
