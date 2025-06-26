@@ -26,7 +26,7 @@ class BloobankWebhookController extends Controller
                 $webhook->update(['status' => 'processed']);
             } catch (\Throwable $e) {
                 $webhook->update(['status' => 'error']);
-                // Opcional: logar o erro, enviar notificação, etc.
+                // Logar erro ou notificar aqui se desejar
             }
         }
 

@@ -4,7 +4,6 @@ namespace App\Filament\Vink\Resources;
 
 use App\Filament\Vink\Resources\BloobankWebhookResource\Pages;
 use App\Models\BloobankWebhook;
-use App\Services\BloobankWebhookProcessor;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -12,8 +11,6 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
-use Filament\Pages\Actions\Action as PageAction;
-use Illuminate\Support\Facades\Cache;
 
 class BloobankWebhookResource extends Resource
 {
@@ -50,17 +47,13 @@ class BloobankWebhookResource extends Resource
 
                 Tables\Columns\TextColumn::make('nickname')
                     ->label('Nickname')
-                    ->getStateUsing(function (BloobankWebhook $record) {
-                        $data = json_decode($record->payload, true);
-                        return $data['body']['customer']['nickname'] ?? '-';
-                    }),
+                    ->getStateUsing(fn (BloobankWebhook $record) => 
+                        json_decode($record->payload, true)['body']['customer']['nickname'] ?? '-'),
 
                 Tables\Columns\TextColumn::make('transaction_id')
                     ->label('Transaction ID')
-                    ->getStateUsing(function (BloobankWebhook $record) {
-                        $data = json_decode($record->payload, true);
-                        return $data['body']['id'] ?? '-';
-                    }),
+                    ->getStateUsing(fn (BloobankWebhook $record) => 
+                        json_decode($record->payload, true)['body']['id'] ?? '-'),
 
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Amount (Value)')
@@ -91,7 +84,7 @@ class BloobankWebhookResource extends Resource
                         try {
                             $data = json_decode($record->payload, true);
 
-                            (new BloobankWebhookProcessor())->process($data);
+                            (new \App\Services\BloobankWebhookProcessor())->process($data);
 
                             $record->update(['status' => 'processed']);
 
@@ -109,21 +102,6 @@ class BloobankWebhookResource extends Resource
                                 ->send();
                         }
                     }),
-            ])
-            ->headerActions([
-                PageAction::make('toggleAutoProcess')
-                    ->label(fn () => Cache::get('bloobank_auto_process', false) ? 'Desativar auto-processo' : 'Ativar auto-processo')
-                    ->action(function () {
-                        $current = Cache::get('bloobank_auto_process', false);
-                        Cache::put('bloobank_auto_process', ! $current);
-                        Notification::make()
-                            ->title('Configuração atualizada')
-                            ->body('Processamento automático ' . (!$current ? 'ativado' : 'desativado') . '.')
-                            ->success()
-                            ->send();
-                    })
-                    ->color(fn () => Cache::get('bloobank_auto_process', false) ? 'danger' : 'success')
-                    ->icon(fn () => Cache::get('bloobank_auto_process', false) ? 'heroicon-o-x' : 'heroicon-o-check')
             ])
             ->defaultSort('created_at', 'desc');
     }
