@@ -12,7 +12,7 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-//Route::post('/pix', [PixController::class, 'handle']);
+Route::post('/pix', [PixController::class, 'handle']);
 
 //Route::post('/pix/webhook', [PixWebhookController::class, 'handle']);
 
