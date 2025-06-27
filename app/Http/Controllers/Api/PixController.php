@@ -42,6 +42,11 @@ class PixController extends Controller
             ? (int) ($rawAmount * 100)
             : (int) $rawAmount;
 
+        // ✅ Verifica se valor é menor que R$50,00 (5000 centavos)
+        if ($amountInCents < 5000) {
+            return response()->json(['error' => 'O valor mínimo para gerar um Pix é R$50,00'], 422);
+        }
+
         try {
             $bloobank = new BloobankService();
 
