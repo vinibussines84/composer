@@ -43,10 +43,10 @@ class TotalPendentesWidget extends BaseWidget
         $valorAprovadosSemana = $aprovadosSemana->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
         $qtdAprovadosSemana = $aprovadosSemana->count();
 
-        // 👤 Gerados por Vinicius
-        $geradosVinicius = BloobankWebhook::get()->filter(function ($webhook) use ($viniciusId) {
+        // 👤 Gerados por Vinicius (user_id: 27)
+        $geradosVinicius = BloobankWebhook::get()->filter(function ($webhook) {
             $payload = json_decode($webhook->payload, true);
-            return ($payload['body']['metadata']['user_id'] ?? null) == $viniciusId;
+            return (string) ($payload['body']['metadata']['user_id'] ?? '') === '27';
         });
 
         $valorGeradosVinicius = $geradosVinicius->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
@@ -80,7 +80,7 @@ class TotalPendentesWidget extends BaseWidget
 
             Card::make('Pagos Vinicius', 'R$ ' . number_format($valorPagosVinicius / 100, 2, ',', '.'))
                 ->description($qtdPagosVinicius . ' aprovados de Vinicius')
-                ->color('success'),
+                ->color('emerald'),
         ];
     }
 }
