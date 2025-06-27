@@ -14,7 +14,7 @@ class TotalPendentesWidget extends BaseWidget
         $hoje = Carbon::today();
         $inicioSemana = Carbon::now()->startOfWeek();
 
-        // Total Pendentes HOJE
+        // Total Pendentes HOJE (status na coluna)
         $pendentesHoje = BloobankWebhook::where('status', 'pending')
             ->whereDate('created_at', $hoje)
             ->get();
@@ -24,20 +24,26 @@ class TotalPendentesWidget extends BaseWidget
             return $payload['body']['amount']['value'] ?? 0;
         });
 
-        // Total Pagos HOJE
-        $pagosHoje = BloobankWebhook::where('status', 'paid')
-            ->whereDate('created_at', $hoje)
-            ->get();
+        // Pagos HOJE (status dentro do payload JSON)
+        $pagosHoje = BloobankWebhook::whereDate('created_at', $hoje)
+            ->get()
+            ->filter(function ($webhook) {
+                $payload = json_decode($webhook->payload, true);
+                return ($payload['body']['status'] ?? null) === 'paid';
+            });
 
         $totalPagosHoje = $pagosHoje->sum(function ($webhook) {
             $payload = json_decode($webhook->payload, true);
             return $payload['body']['amount']['value'] ?? 0;
         });
 
-        // Total Pagos SEMANA
-        $pagosSemana = BloobankWebhook::where('status', 'paid')
-            ->whereDate('created_at', '>=', $inicioSemana)
-            ->get();
+        // Pagos na SEMANA (status dentro do payload JSON)
+        $pagosSemana = BloobankWebhook::whereDate('created_at', '>=', $inicioSemana)
+            ->get()
+            ->filter(function ($webhook) {
+                $payload = json_decode($webhook->payload, true);
+                return ($payload['body']['status'] ?? null) === 'paid';
+            });
 
         $totalPagosSemana = $pagosSemana->sum(function ($webhook) {
             $payload = json_decode($webhook->payload, true);
