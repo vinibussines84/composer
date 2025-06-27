@@ -13,6 +13,7 @@ class TotalPendentesWidget extends BaseWidget
     {
         $hoje = Carbon::today();
         $inicioSemana = Carbon::now()->startOfWeek();
+        $viniciusId = '27';
 
         // 🔸 Pendentes hoje
         $pendentesHoje = BloobankWebhook::where('status', 'pending')
@@ -29,32 +30,36 @@ class TotalPendentesWidget extends BaseWidget
         // ✅ Aprovados hoje
         $aprovadosHoje = BloobankWebhook::whereDate('created_at', $hoje)
             ->get()
-            ->filter(function ($webhook) {
-                $payload = json_decode($webhook->payload, true);
-                return ($payload['body']['status'] ?? null) === 'approved';
-            });
+            ->filter(fn ($webhook) => (json_decode($webhook->payload, true)['body']['status'] ?? null) === 'approved');
 
-        $valorAprovadosHoje = $aprovadosHoje->sum(function ($webhook) {
-            $payload = json_decode($webhook->payload, true);
-            return $payload['body']['amount']['value'] ?? 0;
-        });
-
+        $valorAprovadosHoje = $aprovadosHoje->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
         $qtdAprovadosHoje = $aprovadosHoje->count();
 
         // 📆 Aprovados na semana
         $aprovadosSemana = BloobankWebhook::whereDate('created_at', '>=', $inicioSemana)
             ->get()
-            ->filter(function ($webhook) {
-                $payload = json_decode($webhook->payload, true);
-                return ($payload['body']['status'] ?? null) === 'approved';
-            });
+            ->filter(fn ($webhook) => (json_decode($webhook->payload, true)['body']['status'] ?? null) === 'approved');
 
-        $valorAprovadosSemana = $aprovadosSemana->sum(function ($webhook) {
+        $valorAprovadosSemana = $aprovadosSemana->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
+        $qtdAprovadosSemana = $aprovadosSemana->count();
+
+        // 👤 Gerados por Vinicius
+        $geradosVinicius = BloobankWebhook::get()->filter(function ($webhook) use ($viniciusId) {
             $payload = json_decode($webhook->payload, true);
-            return $payload['body']['amount']['value'] ?? 0;
+            return ($payload['body']['metadata']['user_id'] ?? null) == $viniciusId;
         });
 
-        $qtdAprovadosSemana = $aprovadosSemana->count();
+        $valorGeradosVinicius = $geradosVinicius->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
+        $qtdGeradosVinicius = $geradosVinicius->count();
+
+        // ✅ Pagos por Vinicius
+        $pagosVinicius = $geradosVinicius->filter(function ($webhook) {
+            $payload = json_decode($webhook->payload, true);
+            return ($payload['body']['status'] ?? null) === 'approved';
+        });
+
+        $valorPagosVinicius = $pagosVinicius->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
+        $qtdPagosVinicius = $pagosVinicius->count();
 
         return [
             Card::make('Pendentes Hoje', 'R$ ' . number_format($valorPendentesHoje / 100, 2, ',', '.'))
@@ -68,6 +73,14 @@ class TotalPendentesWidget extends BaseWidget
             Card::make('Pagos na Semana', 'R$ ' . number_format($valorAprovadosSemana / 100, 2, ',', '.'))
                 ->description($qtdAprovadosSemana . ' transações aprovadas')
                 ->color('primary'),
+
+            Card::make('Gerados Vinicius', 'R$ ' . number_format($valorGeradosVinicius / 100, 2, ',', '.'))
+                ->description($qtdGeradosVinicius . ' webhooks gerados')
+                ->color('gray'),
+
+            Card::make('Pagos Vinicius', 'R$ ' . number_format($valorPagosVinicius / 100, 2, ',', '.'))
+                ->description($qtdPagosVinicius . ' aprovados de Vinicius')
+                ->color('success'),
         ];
     }
 }
