@@ -14,53 +14,59 @@ class TotalPendentesWidget extends BaseWidget
         $hoje = Carbon::today();
         $inicioSemana = Carbon::now()->startOfWeek();
 
-        // Total Pendentes HOJE
+        // 🔸 Pendentes hoje
         $pendentesHoje = BloobankWebhook::where('status', 'pending')
             ->whereDate('created_at', $hoje)
             ->get();
 
-        $totalPendentesHoje = $pendentesHoje->sum(function ($webhook) {
+        $valorPendentesHoje = $pendentesHoje->sum(function ($webhook) {
             $payload = json_decode($webhook->payload, true);
             return $payload['body']['amount']['value'] ?? 0;
         });
 
-        // Pagos HOJE (status: approved)
-        $pagosHoje = BloobankWebhook::whereDate('created_at', $hoje)
+        $qtdPendentesHoje = $pendentesHoje->count();
+
+        // ✅ Aprovados hoje
+        $aprovadosHoje = BloobankWebhook::whereDate('created_at', $hoje)
             ->get()
             ->filter(function ($webhook) {
                 $payload = json_decode($webhook->payload, true);
                 return ($payload['body']['status'] ?? null) === 'approved';
             });
 
-        $totalPagosHoje = $pagosHoje->sum(function ($webhook) {
+        $valorAprovadosHoje = $aprovadosHoje->sum(function ($webhook) {
             $payload = json_decode($webhook->payload, true);
             return $payload['body']['amount']['value'] ?? 0;
         });
 
-        // Pagos na SEMANA (status: approved)
-        $pagosSemana = BloobankWebhook::whereDate('created_at', '>=', $inicioSemana)
+        $qtdAprovadosHoje = $aprovadosHoje->count();
+
+        // 📆 Aprovados na semana
+        $aprovadosSemana = BloobankWebhook::whereDate('created_at', '>=', $inicioSemana)
             ->get()
             ->filter(function ($webhook) {
                 $payload = json_decode($webhook->payload, true);
                 return ($payload['body']['status'] ?? null) === 'approved';
             });
 
-        $totalPagosSemana = $pagosSemana->sum(function ($webhook) {
+        $valorAprovadosSemana = $aprovadosSemana->sum(function ($webhook) {
             $payload = json_decode($webhook->payload, true);
             return $payload['body']['amount']['value'] ?? 0;
         });
+
+        $qtdAprovadosSemana = $aprovadosSemana->count();
 
         return [
-            Card::make('Total Pendentes Hoje', 'R$ ' . number_format($totalPendentesHoje / 100, 2, ',', '.'))
-                ->description('Status pending de hoje')
+            Card::make('Pendentes Hoje', 'R$ ' . number_format($valorPendentesHoje / 100, 2, ',', '.'))
+                ->description($qtdPendentesHoje . ' transações pendentes')
                 ->color('warning'),
 
-            Card::make('Total Pagos Hoje', 'R$ ' . number_format($totalPagosHoje / 100, 2, ',', '.'))
-                ->description('Webhooks approved hoje')
+            Card::make('Pagos Hoje', 'R$ ' . number_format($valorAprovadosHoje / 100, 2, ',', '.'))
+                ->description($qtdAprovadosHoje . ' transações aprovadas')
                 ->color('success'),
 
-            Card::make('Total Pagos na Semana', 'R$ ' . number_format($totalPagosSemana / 100, 2, ',', '.'))
-                ->description('Desde segunda-feira')
+            Card::make('Pagos na Semana', 'R$ ' . number_format($valorAprovadosSemana / 100, 2, ',', '.'))
+                ->description($qtdAprovadosSemana . ' transações aprovadas')
                 ->color('primary'),
         ];
     }
