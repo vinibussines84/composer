@@ -14,7 +14,7 @@ class TotalPendentesWidget extends BaseWidget
         $hoje = Carbon::today();
         $inicioSemana = Carbon::now()->startOfWeek();
 
-        // Total Pendentes HOJE (status na coluna)
+        // Total Pendentes HOJE
         $pendentesHoje = BloobankWebhook::where('status', 'pending')
             ->whereDate('created_at', $hoje)
             ->get();
@@ -24,12 +24,12 @@ class TotalPendentesWidget extends BaseWidget
             return $payload['body']['amount']['value'] ?? 0;
         });
 
-        // Pagos HOJE (status dentro do payload JSON)
+        // Pagos HOJE (status: approved)
         $pagosHoje = BloobankWebhook::whereDate('created_at', $hoje)
             ->get()
             ->filter(function ($webhook) {
                 $payload = json_decode($webhook->payload, true);
-                return ($payload['body']['status'] ?? null) === 'paid';
+                return ($payload['body']['status'] ?? null) === 'approved';
             });
 
         $totalPagosHoje = $pagosHoje->sum(function ($webhook) {
@@ -37,12 +37,12 @@ class TotalPendentesWidget extends BaseWidget
             return $payload['body']['amount']['value'] ?? 0;
         });
 
-        // Pagos na SEMANA (status dentro do payload JSON)
+        // Pagos na SEMANA (status: approved)
         $pagosSemana = BloobankWebhook::whereDate('created_at', '>=', $inicioSemana)
             ->get()
             ->filter(function ($webhook) {
                 $payload = json_decode($webhook->payload, true);
-                return ($payload['body']['status'] ?? null) === 'paid';
+                return ($payload['body']['status'] ?? null) === 'approved';
             });
 
         $totalPagosSemana = $pagosSemana->sum(function ($webhook) {
@@ -56,7 +56,7 @@ class TotalPendentesWidget extends BaseWidget
                 ->color('warning'),
 
             Card::make('Total Pagos Hoje', 'R$ ' . number_format($totalPagosHoje / 100, 2, ',', '.'))
-                ->description('Webhooks pagos hoje')
+                ->description('Webhooks approved hoje')
                 ->color('success'),
 
             Card::make('Total Pagos na Semana', 'R$ ' . number_format($totalPagosSemana / 100, 2, ',', '.'))
