@@ -18,21 +18,36 @@
       transition: background-color 9999s ease-in-out 0s !important;
     }
 
-    .password-hidden::placeholder {
-      color: transparent;
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
     }
 
-    .animate-dots::after {
-      content: "••••••";
-      animation: dots 1s infinite ease-in-out;
-      color: #aaa;
-      letter-spacing: 3px;
+    .loading-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
     }
 
-    @keyframes dots {
-      0% { opacity: 0.3; }
-      50% { opacity: 1; }
-      100% { opacity: 0.3; }
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-top: 4px solid #facc15;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -76,15 +91,15 @@
         </div>
       </div>
 
-      <!-- Senha com botão de mostrar/ocultar -->
+      <!-- Senha -->
       <div>
         <label class="block text-sm font-medium mb-1">Senha</label>
         <div class="relative">
           <input type="password" name="password" id="password-input"
-            class="w-full px-4 py-3 pl-11 pr-20 rounded-lg bg-transparent border border-white/30 text-white focus:outline-none focus:border-yellow-400 transition-all duration-200 password-hidden"
+            class="w-full px-4 py-3 pl-11 pr-20 rounded-lg bg-transparent border border-white/30 text-white focus:outline-none focus:border-yellow-400 transition-all duration-200"
             autocomplete="current-password" required placeholder="••••••">
 
-          <!-- Olho -->
+          <!-- Botão mostrar/ocultar -->
           <button type="button" id="toggle-password"
             class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-yellow-400 text-xs hover:underline focus:outline-none">
             <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
@@ -98,7 +113,10 @@
         <p class="text-xs text-gray-400 mt-1">Mínimo de 6 caracteres</p>
       </div>
 
-      <button type="submit"
+      <!-- Botão Entrar -->
+      <button
+        type="button"
+        onclick="submitWithLoading()"
         class="w-full py-3 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-300 hover:shadow-yellow-500/30 hover:shadow-lg transition-all text-sm tracking-wide">
         Entrar
       </button>
@@ -112,6 +130,12 @@
     <a href="#" class="underline hover:text-white/70">Termos e condições</a>
   </footer>
 
+  <!-- Loading Overlay -->
+  <div id="loading" class="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Scripts -->
   <script>
     // Fade-in animation
     document.querySelectorAll('.animate-fade-in').forEach(el => {
@@ -130,14 +154,21 @@
 
     toggleButton.addEventListener('click', () => {
       const isHidden = passwordInput.type === 'password';
-
       passwordInput.type = isHidden ? 'text' : 'password';
       toggleText.textContent = isHidden ? 'Ocultar' : 'Mostrar';
-
       eyeIcon.innerHTML = isHidden
         ? `<path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.965 9.965 0 012.066-3.368M9.88 9.88a3 3 0 004.24 4.24m1.13-6.75a9.974 9.974 0 014.392 5.01 9.957 9.957 0 01-1.427 2.568M3 3l18 18" />`
         : `<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>`;
     });
+
+    // Enviar com loading
+    function submitWithLoading() {
+      const overlay = document.getElementById('loading');
+      overlay.classList.add('active');
+      setTimeout(() => {
+        document.querySelector('form').submit();
+      }, 2000);
+    }
   </script>
 </body>
 </html>
