@@ -3,6 +3,7 @@
 namespace App\Filament\Vink\Widgets;
 
 use App\Models\BloobankWebhook;
+use App\Models\PixTransaction;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Card;
 use Illuminate\Support\Carbon;
@@ -13,9 +14,10 @@ class TotalPendentesWidget extends BaseWidget
     {
         $hoje = Carbon::today();
         $inicioSemana = Carbon::now()->startOfWeek();
-        $viniciusId = '27';
 
-        // 🔸 Pendentes hoje
+        /**
+         * 🔸 Total Pendentes Hoje
+         */
         $pendentesHoje = BloobankWebhook::where('status', 'pending')
             ->whereDate('created_at', $hoje)
             ->get();
@@ -27,7 +29,9 @@ class TotalPendentesWidget extends BaseWidget
 
         $qtdPendentesHoje = $pendentesHoje->count();
 
-        // ✅ Aprovados hoje
+        /**
+         * ✅ Total Pagos Hoje (status 'approved' no payload)
+         */
         $aprovadosHoje = BloobankWebhook::whereDate('created_at', $hoje)
             ->get()
             ->filter(fn ($webhook) => (json_decode($webhook->payload, true)['body']['status'] ?? null) === 'approved');
@@ -35,7 +39,9 @@ class TotalPendentesWidget extends BaseWidget
         $valorAprovadosHoje = $aprovadosHoje->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
         $qtdAprovadosHoje = $aprovadosHoje->count();
 
-        // 📆 Aprovados na semana
+        /**
+         * 📆 Total Pagos na Semana
+         */
         $aprovadosSemana = BloobankWebhook::whereDate('created_at', '>=', $inicioSemana)
             ->get()
             ->filter(fn ($webhook) => (json_decode($webhook->payload, true)['body']['status'] ?? null) === 'approved');
@@ -43,24 +49,29 @@ class TotalPendentesWidget extends BaseWidget
         $valorAprovadosSemana = $aprovadosSemana->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
         $qtdAprovadosSemana = $aprovadosSemana->count();
 
-        // 👤 Gerados por Vinicius (user_id: 27)
-        $geradosVinicius = BloobankWebhook::get()->filter(function ($webhook) {
-            $payload = json_decode($webhook->payload, true);
-            return (string) ($payload['body']['metadata']['user_id'] ?? '') === '27';
-        });
+        /**
+         * 👤 Gerados por Vinicius (PixTransaction com user_id = 27)
+         */
+        $geradosViniciusHoje = PixTransaction::where('user_id', 27)
+            ->whereDate('created_at', $hoje)
+            ->get();
 
-        $valorGeradosVinicius = $geradosVinicius->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
-        $qtdGeradosVinicius = $geradosVinicius->count();
+        $valorGeradosVinicius = $geradosViniciusHoje->sum('amount');
+        $qtdGeradosVinicius = $geradosViniciusHoje->count();
 
-        // ✅ Pagos por Vinicius
-        $pagosVinicius = $geradosVinicius->filter(function ($webhook) {
-            $payload = json_decode($webhook->payload, true);
-            return ($payload['body']['status'] ?? null) === 'approved';
-        });
+        /**
+         * ✅ Pagos por Vinicius (CashIn efetivado com status 'paid')
+         */
+        $pagosVinicius = PixTransaction::where('user_id', 27)
+            ->where('status', 'paid')
+            ->get();
 
-        $valorPagosVinicius = $pagosVinicius->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
+        $valorPagosVinicius = $pagosVinicius->sum('amount');
         $qtdPagosVinicius = $pagosVinicius->count();
 
+        /**
+         * 🔁 Cards
+         */
         return [
             Card::make('Pendentes Hoje', 'R$ ' . number_format($valorPendentesHoje / 100, 2, ',', '.'))
                 ->description($qtdPendentesHoje . ' transações pendentes')
@@ -75,11 +86,11 @@ class TotalPendentesWidget extends BaseWidget
                 ->color('primary'),
 
             Card::make('Gerados Vinicius', 'R$ ' . number_format($valorGeradosVinicius / 100, 2, ',', '.'))
-                ->description($qtdGeradosVinicius . ' webhooks gerados')
+                ->description($qtdGeradosVinicius . ' criados hoje')
                 ->color('gray'),
 
             Card::make('Pagos Vinicius', 'R$ ' . number_format($valorPagosVinicius / 100, 2, ',', '.'))
-                ->description($qtdPagosVinicius . ' aprovados de Vinicius')
+                ->description($qtdPagosVinicius . ' pagos (Cash In)')
                 ->color('emerald'),
         ];
     }
