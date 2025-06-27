@@ -50,6 +50,12 @@ class PixTransactionResource extends Resource
                     ->getStateUsing(fn ($record) => $record->amount / 100)
                     ->money('BRL'),
 
+                TextColumn::make('description')
+                    ->label('Descrição')
+                    ->icon('heroicon-o-information-circle')
+                    ->color(fn ($record) => str_contains($record->description, 'Comissão') ? 'warning' : 'gray')
+                    ->limit(50),
+
                 IconColumn::make('status')
                     ->label('Status')
                     ->icon(fn (string $state): string => match ($state) {
