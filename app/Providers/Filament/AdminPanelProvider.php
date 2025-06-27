@@ -35,7 +35,10 @@ class AdminPanelProvider extends PanelProvider
             ->id('trust')
             ->default()
             ->path('trust')
-            ->login()
+
+            // 👇 Redireciona para /login ao deslogar
+            ->login(fn () => redirect()->route('login'))
+
             ->registration()
             ->passwordReset()
             ->profile()
@@ -57,7 +60,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 AdminStats::class,
                 Ultimas10TransacoesDoUsuario::class,
-                BlogPostsChart::class, // <- Adicionado aqui
+                BlogPostsChart::class,
             ])
             ->middleware([
                 EncryptCookies::class,
