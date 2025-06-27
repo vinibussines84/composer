@@ -85,7 +85,7 @@
 
   <!-- Rodapé -->
   <footer class="mt-6 sm:mt-10 text-xs text-white/40 text-center w-full z-10 px-2 sm:px-0">
-    © 2025 Trustgate. Todos os direitos reservados. |
+    © 2025 <span class="text-yellow-400 font-semibold">Trustgate</span>. Todos os direitos reservados. |
     <a href="#" class="underline hover:text-white/70">Política de privacidade</a> |
     <a href="#" class="underline hover:text-white/70">Termos e condições</a>
   </footer>
