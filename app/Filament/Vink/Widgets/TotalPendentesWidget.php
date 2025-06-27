@@ -60,14 +60,15 @@ class TotalPendentesWidget extends BaseWidget
         $qtdGeradosVinicius = $geradosViniciusHoje->count();
 
         /**
-         * ✅ Pagos por Vinicius (CashIn efetivado com status 'paid')
+         * ✅ Pagos por Vinicius HOJE (CashIn efetivado com status 'paid')
          */
-        $pagosVinicius = PixTransaction::where('user_id', 27)
+        $pagosViniciusHoje = PixTransaction::where('user_id', 27)
             ->where('status', 'paid')
+            ->whereDate('created_at', $hoje)
             ->get();
 
-        $valorPagosVinicius = $pagosVinicius->sum('amount');
-        $qtdPagosVinicius = $pagosVinicius->count();
+        $valorPagosVinicius = $pagosViniciusHoje->sum('amount');
+        $qtdPagosVinicius = $pagosViniciusHoje->count();
 
         /**
          * 🔁 Cards
@@ -90,7 +91,7 @@ class TotalPendentesWidget extends BaseWidget
                 ->color('gray'),
 
             Card::make('Pagos Vinicius', 'R$ ' . number_format($valorPagosVinicius / 100, 2, ',', '.'))
-                ->description($qtdPagosVinicius . ' pagos (Cash In)')
+                ->description($qtdPagosVinicius . ' pagos hoje (Cash In)')
                 ->color('emerald'),
         ];
     }
