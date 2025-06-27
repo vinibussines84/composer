@@ -10,15 +10,29 @@
       background: radial-gradient(circle at -20% 30%, rgba(255, 213, 0, 0.15), transparent 60%) #000000;
     }
 
-    input:-webkit-autofill,
-    input:-webkit-autofill:hover,
-    input:-webkit-autofill:focus,
-    input:-webkit-autofill:active {
+    input:-webkit-autofill {
       -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
       box-shadow: 0 0 0 1000px transparent inset !important;
       -webkit-text-fill-color: white !important;
       caret-color: white !important;
       transition: background-color 9999s ease-in-out 0s !important;
+    }
+
+    .password-hidden::placeholder {
+      color: transparent;
+    }
+
+    .animate-dots::after {
+      content: "••••••";
+      animation: dots 1s infinite ease-in-out;
+      color: #aaa;
+      letter-spacing: 3px;
+    }
+
+    @keyframes dots {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
     }
   </style>
 </head>
@@ -47,6 +61,7 @@
     <form method="POST" action="{{ route('login') }}" class="space-y-6">
       @csrf
 
+      <!-- Email -->
       <div>
         <label class="block text-sm font-medium mb-1">E-mail</label>
         <div class="relative">
@@ -61,17 +76,24 @@
         </div>
       </div>
 
+      <!-- Senha com botão de mostrar/ocultar -->
       <div>
         <label class="block text-sm font-medium mb-1">Senha</label>
         <div class="relative">
-          <input type="password" name="password"
-            class="w-full px-4 py-3 pl-11 rounded-lg bg-transparent border border-white/30 text-white focus:outline-none focus:border-yellow-400 transition-all duration-200"
-            autocomplete="current-password" required>
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2"
-               viewBox="0 0 24 24">
-            <path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
-            <path d="M12 3C7 3 2 7 2 12s5 9 10 9 10-4 10-9-5-9-10-9z"/>
-          </svg>
+          <input type="password" name="password" id="password-input"
+            class="w-full px-4 py-3 pl-11 pr-20 rounded-lg bg-transparent border border-white/30 text-white focus:outline-none focus:border-yellow-400 transition-all duration-200 password-hidden"
+            autocomplete="current-password" required placeholder="••••••">
+
+          <!-- Olho -->
+          <button type="button" id="toggle-password"
+            class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-yellow-400 text-xs hover:underline focus:outline-none">
+            <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            <span id="toggle-text">Mostrar</span>
+          </button>
         </div>
         <p class="text-xs text-gray-400 mt-1">Mínimo de 6 caracteres</p>
       </div>
@@ -98,6 +120,23 @@
         el.style.transition = 'opacity 1s ease-out';
         el.style.opacity = 1;
       }, 100);
+    });
+
+    // Mostrar/Ocultar senha
+    const passwordInput = document.getElementById('password-input');
+    const toggleButton = document.getElementById('toggle-password');
+    const eyeIcon = document.getElementById('eye-icon');
+    const toggleText = document.getElementById('toggle-text');
+
+    toggleButton.addEventListener('click', () => {
+      const isHidden = passwordInput.type === 'password';
+
+      passwordInput.type = isHidden ? 'text' : 'password';
+      toggleText.textContent = isHidden ? 'Ocultar' : 'Mostrar';
+
+      eyeIcon.innerHTML = isHidden
+        ? `<path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.965 9.965 0 012.066-3.368M9.88 9.88a3 3 0 004.24 4.24m1.13-6.75a9.974 9.974 0 014.392 5.01 9.957 9.957 0 01-1.427 2.568M3 3l18 18" />`
+        : `<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>`;
     });
   </script>
 </body>
