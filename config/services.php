@@ -7,10 +7,9 @@ return [
     | Third Party Services
     |--------------------------------------------------------------------------
     |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
+    | Este arquivo armazena as credenciais de serviços de terceiros como
+    | Mailgun, Postmark, AWS, Pluggou e outros. Aqui é o local padrão
+    | para configurar essas integrações externas no seu projeto.
     |
     */
 
@@ -33,6 +32,11 @@ return [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
+    ],
+
+    'pluggou' => [
+        'api_key' => env('PLUGGOU_API_KEY'),
+        'organization_id' => env('PLUGGOU_ORGANIZATION_ID'),
     ],
 
 ];

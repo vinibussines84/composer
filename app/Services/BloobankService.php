@@ -2,94 +2,62 @@
 
 namespace App\Services;
 
-use App\Helpers\BloobankAuth;
 use Illuminate\Support\Facades\Http;
 
 class BloobankService
 {
-    protected string $accessKey;
-    protected string $privateKey;
+    protected string $pluggouApiKey;
+    protected string $pluggouOrganizationId;
 
     public function __construct()
     {
-        $this->accessKey  = 'BZxvFBwBUftDm1Kf9RPDGAv598WseiyyLZZpv46J2BTA'; // Substitua pela sua real
-        $this->privateKey = file_get_contents(storage_path('bloobank/privateKey.pem'));
+        $this->pluggouApiKey = config('services.pluggou.api_key');
+        $this->pluggouOrganizationId = config('services.pluggou.organization_id');
     }
 
     /**
-     * Cria um pagamento Pix (Cobrança)
+     * Cria um depósito Pix via Pluggou
      */
-    public function createPixPayment(array $user, int $amountInCents): array
+    public function createPluggouDeposit(array $data): array
     {
-        // 📞 Formata o telefone para +55XXXXXXXXXXX
-        $rawPhone = $user['phone'] ?? '11999999999';
-        $digitsOnly = preg_replace('/\D/', '', $rawPhone);
-        $formattedPhone = '+55' . $digitsOnly;
-
         $payload = [
-            'method' => 'pix',
-            'amount' => [
-                'value' => $amountInCents
-            ],
-            'customer' => [
-                'doc' => [
-                    'type' => 'CPF',
-                    'value' => '14493030054',
-                ],
-                'name' => 'TrustGateway', // Nome artificial fixo exigido pela API
-                'phone' => $formattedPhone,
-                'email' => null, // Pode ser removido se a API rejeitar null
-            ],
-            'pix' => [
-                'expiresIn' => 600
-            ],
-            'installments' => 1,
-            'metadata' => [
-                'user_id' => $user['id'] ?? null,
-                'via' => 'TrustGateway'
-            ],
+            'amount' => $data['amount'], // obrigatório
+            'customerName' => $data['customerName'], // obrigatório
+            'customerEmail' => $data['customerEmail'], // obrigatório
+            'organizationId' => $this->pluggouOrganizationId, // obrigatório
         ];
 
-        $auth = BloobankAuth::generateSignature($this->accessKey, $this->privateKey, $payload);
+        // Campos opcionais
+        if (!empty($data['customerPhone'])) {
+            $payload['customerPhone'] = $data['customerPhone'];
+        }
+
+        if (!empty($data['customerDocument'])) {
+            $payload['customerDocument'] = $data['customerDocument'];
+        }
+
+        if (!empty($data['customerDocumentType'])) {
+            $payload['customerDocumentType'] = $data['customerDocumentType']; // cpf ou cnpj
+        }
+
+        if (!empty($data['description'])) {
+            $payload['description'] = $data['description'];
+        }
+
+        if (!empty($data['metadata']) && is_array($data['metadata'])) {
+            $payload['metadata'] = $data['metadata'];
+        }
 
         $response = Http::withHeaders([
-            'X-Access-Key' => $this->accessKey,
-            'X-Access-Timestamp' => $auth['timestamp'],
-            'X-Access-Signature' => $auth['signature'],
+            'X-API-Key' => $this->pluggouApiKey,
             'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-        ])->post('https://payment.blooapis.io/v1/payments', $payload);
+        ])->post('https://app.pluggou.io/api/payments/transactions', $payload);
 
         return [
             'status' => $response->status(),
             'ok' => $response->ok(),
             'body' => $response->body(),
             'json' => $response->json(),
-            'headers' => $response->headers(),
-        ];
-    }
-
-    /**
-     * Envia um payout (saque Pix)
-     */
-    public function createPayout(array $payload): array
-    {
-        $auth = BloobankAuth::generateSignature($this->accessKey, $this->privateKey, $payload);
-
-        $response = Http::withHeaders([
-            'X-Access-Key' => $this->accessKey,
-            'X-Access-Timestamp' => $auth['timestamp'],
-            'X-Access-Signature' => $auth['signature'],
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-        ])->post('https://payment.blooapis.io/v1/payouts', $payload);
-
-        return [
-            'status' => $response->status(),
-            'ok' => $response->ok(),
-            'body' => $response->body(),
-            'json' => $response->json(),
-            'headers' => $response->headers(),
         ];
     }
 }
