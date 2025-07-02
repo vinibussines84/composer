@@ -1,99 +1,122 @@
 <?php
 
-namespace App\Filament\Vink\Widgets;
+namespace App\Http\Controllers\Api;
 
-use App\Models\BloobankWebhook;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\User;
 use App\Models\PixTransaction;
-use Filament\Widgets\StatsOverviewWidget as BaseWidget;
-use Filament\Widgets\StatsOverviewWidget\Card;
-use Illuminate\Support\Carbon;
+use App\Services\BloobankService;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
-class TotalPendentesWidget extends BaseWidget
+class PixController extends Controller
 {
-    protected function getCards(): array
+    public function handle(Request $request)
     {
-        $hoje = Carbon::today();
-        $inicioSemana = Carbon::now()->startOfWeek();
+        Log::info('Recebendo requisição Pix', [
+            'headers' => $request->headers->all(),
+            'body' => $request->all(),
+        ]);
 
-        /**
-         * 🔸 Total Pendentes Hoje
-         */
-        $pendentesHoje = BloobankWebhook::where('status', 'pending')
-            ->whereDate('created_at', $hoje)
-            ->get();
+        $authkey = $request->header('authkey');
+        $gtkey   = $request->header('gtkey');
 
-        $valorPendentesHoje = $pendentesHoje->sum(function ($webhook) {
-            $payload = json_decode($webhook->payload, true);
-            return $payload['body']['amount']['value'] ?? 0;
-        });
+        if (! $authkey || ! $gtkey) {
+            return response()->json(['error' => 'Credenciais ausentes'], 401);
+        }
 
-        $qtdPendentesHoje = $pendentesHoje->count();
+        $user = User::where('authkey', $authkey)
+                    ->where('gtkey', $gtkey)
+                    ->first();
 
-        /**
-         * ✅ Total Pagos Hoje (status 'approved' no payload)
-         */
-        $aprovadosHoje = BloobankWebhook::whereDate('created_at', $hoje)
-            ->get()
-            ->filter(fn ($webhook) => (json_decode($webhook->payload, true)['body']['status'] ?? null) === 'approved');
+        if (! $user) {
+            return response()->json(['error' => 'Credenciais inválidas'], 403);
+        }
 
-        $valorAprovadosHoje = $aprovadosHoje->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
-        $qtdAprovadosHoje = $aprovadosHoje->count();
+        if ($user->cashin_ativo != 1) {
+            return response()->json(['error' => 'CashIn desativado para este usuário'], 403);
+        }
 
-        /**
-         * 📆 Total Pagos na Semana
-         */
-        $aprovadosSemana = BloobankWebhook::whereDate('created_at', '>=', $inicioSemana)
-            ->get()
-            ->filter(fn ($webhook) => (json_decode($webhook->payload, true)['body']['status'] ?? null) === 'approved');
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+        ]);
 
-        $valorAprovadosSemana = $aprovadosSemana->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
-        $qtdAprovadosSemana = $aprovadosSemana->count();
+        $rawAmount = $validated['amount'];
+        $amountInCents = is_float($rawAmount) || $rawAmount < 1000
+            ? (int) ($rawAmount * 100)
+            : (int) $rawAmount;
 
-        /**
-         * 👤 Gerados por Vinicius (PixTransaction com user_id = 27)
-         */
-        $geradosViniciusHoje = PixTransaction::where('user_id', 27)
-            ->whereDate('created_at', $hoje)
-            ->get();
+        try {
+            $bloobank = new BloobankService();
 
-        $valorGeradosVinicius = $geradosViniciusHoje->sum('amount');
-        $qtdGeradosVinicius = $geradosViniciusHoje->count();
+            $response = $bloobank->createPixPayment($user->toArray(), $amountInCents);
+            $data = $response['json'];
 
-        /**
-         * ✅ Pagos por Vinicius (Webhook payload com user_id = 27)
-         */
-        $pagosVinicius = BloobankWebhook::get()->filter(function ($webhook) {
-            $payload = json_decode($webhook->payload, true);
-            return ($payload['body']['status'] ?? null) === 'approved'
-                && (string) ($payload['body']['metadata']['user_id'] ?? '') === '27';
-        });
+            $isValid = isset($data['id'], $data['pix']['copypaste']);
 
-        $valorPagosVinicius = $pagosVinicius->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
-        $qtdPagosVinicius = $pagosVinicius->count();
+            if (! $isValid) {
+                Log::error('Bloobank retornou erro inesperado', [
+                    'status' => $response['status'],
+                    'body' => $response['body'],
+                ]);
+                return response()->json([
+                    'error' => 'Unauthorized for this request #000001',
+                ], $response['status']);
+            }
 
-        /**
-         * 🔁 Retorno dos Cards
-         */
-        return [
-            Card::make('Pendentes Hoje', 'R$ ' . number_format($valorPendentesHoje / 100, 2, ',', '.'))
-                ->description($qtdPendentesHoje . ' transações pendentes')
-                ->color('warning'),
+            PixTransaction::create([
+                'user_id' => $user->id,
+                'authkey' => $authkey,
+                'gtkey' => $gtkey,
+                'provedora' => 'Bloobank',
+                'external_transaction_id' => $data['id'],
+                'txid' => $data['id'],
+                'amount' => $amountInCents,
+                'status' => $data['status'],
+                'pix' => $data['pix'],
+                'created_at_api' => isset($data['createdAt'])
+                    ? Carbon::parse($data['createdAt'])->utc()
+                    : now()->utc(),
+            ]);
 
-            Card::make('Pagos Hoje', 'R$ ' . number_format($valorAprovadosHoje / 100, 2, ',', '.'))
-                ->description($qtdAprovadosHoje . ' transações aprovadas')
-                ->color('success'),
+            Log::info('Transação Pix salva com sucesso', [
+                'user_id' => $user->id,
+                'transaction_id' => $data['id'],
+            ]);
 
-            Card::make('Pagos na Semana', 'R$ ' . number_format($valorAprovadosSemana / 100, 2, ',', '.'))
-                ->description($qtdAprovadosSemana . ' transações aprovadas')
-                ->color('primary'),
+            return response()->json([
+                'id' => $data['id'],
+                'status' => $data['status'],
+                'amount' => number_format($amountInCents / 100, 2, '.', ''),
+                'pix' => $data['pix'], // ✅ Retorna estrutura completa com `copypaste`
+            ]);
 
-            Card::make('Gerados Vinicius', 'R$ ' . number_format($valorGeradosVinicius / 100, 2, ',', '.'))
-                ->description($qtdGeradosVinicius . ' criados hoje')
-                ->color('gray'),
+        } catch (\Exception $e) {
+            Log::error('Erro ao criar pagamento Pix Bloobank', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['error' => 'Erro ao processar: ' . $e->getMessage()], 500);
+        }
+    }
 
-            Card::make('Pagos Vinicius', 'R$ ' . number_format($valorPagosVinicius / 100, 2, ',', '.'))
-                ->description($qtdPagosVinicius . ' aprovados via webhook')
-                ->color('emerald'),
-        ];
+    public function status(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|string',
+        ]);
+
+        $transaction = PixTransaction::where('external_transaction_id', $request->input('id'))->first();
+
+        if (! $transaction) {
+            return response()->json(['error' => 'Transação não encontrada'], 404);
+        }
+
+        return response()->json([
+            'id' => $transaction->external_transaction_id,
+            'status' => $transaction->status,
+            'amount' => number_format($transaction->amount / 100, 2, '.', ''),
+        ]);
     }
 }

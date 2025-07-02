@@ -35,7 +35,7 @@ return [
     ],
 
     'pluggou' => [
-        'api_key' => env('PLUGGOU_API_KEY'),
+        'api_key' => env('PLUGGOU_API_KE2Y'),
         'organization_id' => env('PLUGGOU_ORGANIZATION_ID'),
     ],
 
