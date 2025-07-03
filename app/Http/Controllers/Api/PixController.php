@@ -113,20 +113,22 @@ class PixController extends Controller
 
     public function status(Request $request)
     {
-        $request->validate(['id' => 'required|string']);
+        $request->validate([
+            'id' => 'required|string',
+        ]);
 
-        $t = PixTransaction::where('external_transaction_id', $request->input('id'))
-                           ->orWhere('reference_code', $request->input('id'))
-                           ->first();
+        $transaction = PixTransaction::where('external_transaction_id', $request->input('id'))
+                                     ->orWhere('reference_code', $request->input('id'))
+                                     ->first();
 
-        if (!$t) {
+        if (!$transaction) {
             return response()->json(['error' => 'Transação não encontrada'], 404);
         }
 
         return response()->json([
-            'id'     => $t->reference_code ?: $t->external_transaction_id,
-            'status' => $t->status,
-            'amount' => number_format($t->amount / 100, 2, '.', ''),
+            'id'     => $transaction->reference_code ?: $transaction->external_transaction_id,
+            'status' => $transaction->status,
+            'amount' => number_format($transaction->amount / 100, 2, '.', ''),
         ]);
     }
 }
