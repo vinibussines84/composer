@@ -66,17 +66,21 @@ class PixController extends Controller
             $response = $pluggou->createPix($payload);
             $data     = $response['json'];
 
-            $referenceCode = $data['referenceCode'] ?? $data['id'];
-            $qrCode        = $data['pix']['qrCode']['emv'] ?? null;
-            $txid          = $data['pix']['txid'] ?? null;
-
-            if (!$qrCode) {
-                Log::error('Resposta Pluggou sem qrCode.emv', $data);
+            if (
+                !isset($data['pix']) ||
+                !isset($data['pix']['qrCode']['emv']) ||
+                !isset($data['status'])
+            ) {
+                Log::error('Resposta Pluggou inválida ou incompleta', ['data' => $data, 'body' => $response['body']]);
                 return response()->json([
                     'error'   => 'Erro Pluggou',
-                    'message' => $response['body'],
+                    'message' => 'Resposta incompleta da provedora',
                 ], 502);
             }
+
+            $referenceCode = $data['referenceCode'] ?? $data['id'] ?? null;
+            $qrCode        = $data['pix']['qrCode']['emv'];
+            $txid          = $data['pix']['txid'] ?? $data['id'];
 
             PixTransaction::create([
                 'user_id'                 => $user->id,
@@ -85,7 +89,7 @@ class PixController extends Controller
                 'provedora'               => 'Pluggou',
                 'external_transaction_id' => $data['id'],
                 'reference_code'          => $referenceCode,
-                'txid'                    => $txid ?: $data['id'],
+                'txid'                    => $txid,
                 'amount'                  => $amountCents,
                 'status'                  => $data['status'],
                 'pix'                     => $data['pix'],
@@ -97,7 +101,7 @@ class PixController extends Controller
                 'status'    => $data['status'],
                 'amount'    => number_format($amountCents / 100, 2, '.', ''),
                 'copypaste' => $qrCode,
-                'txid'      => $txid ?: $data['id'],
+                'txid'      => $txid,
             ]);
         } catch (\Throwable $e) {
             Log::error('Erro ao criar Pix Pluggou', [
