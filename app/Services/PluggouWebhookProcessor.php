@@ -19,7 +19,7 @@ class PluggouWebhookProcessor
         $data = $payload['data'] ?? [];
 
         $referenceCode = $data['referenceCode'] ?? null;
-        $statusPluggou = $data['status'] ?? null;
+        $statusPluggou = strtoupper($data['status'] ?? '');
 
         if (!$referenceCode || !$statusPluggou) {
             Log::warning('[PluggouWebhook] Dados incompletos no payload', [
@@ -45,11 +45,12 @@ class PluggouWebhookProcessor
             return;
         }
 
-        // Converte status da Pluggou para o do seu sistema
         if ($statusPluggou === 'APPROVED') {
             $transaction->update(['status' => 'paid']);
 
+            $transaction->load('user');
             $user = $transaction->user;
+
             if ($user) {
                 $valor = $transaction->amount;
                 $taxa  = $user->taxa_cash_in ?? 0;
