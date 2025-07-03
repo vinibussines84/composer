@@ -14,6 +14,10 @@ class CheckPixStatus extends Command
 
     public function handle(): void
     {
+        $this->info('⚠️ Comando desabilitado temporariamente.');
+        return;
+
+        // Código original mantido abaixo
         $transactions = PixTransaction::whereNotIn('status', ['paid', 'refunded', 'chargeback', 'in_protest'])->get();
 
         foreach ($transactions as $transaction) {
