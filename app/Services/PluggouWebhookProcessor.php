@@ -7,29 +7,73 @@ use Illuminate\Support\Facades\Log;
 
 class PluggouWebhookProcessor
 {
-    /**
-     * Trata o payload do webhook da Pluggou.
-     * Ajuste conforme a documentação oficial.
-     */
     public function process(array $payload): void
     {
-        // Exemplo: evento de mudança de status de pagamento
-        if (($payload['event'] ?? null) === 'payment_status_changed') {
+        $type = $payload['type'] ?? null;
 
-            $status         = $payload['data']['status']         ?? null;
-            $referenceCode  = $payload['data']['referenceCode']  ?? null;
-
-            if ($referenceCode && $status) {
-                PixTransaction::where('reference_code', $referenceCode)
-                    ->update(['status' => $status]);
-
-                Log::info('[PluggouWebhook] Status atualizado', [
-                    'referenceCode' => $referenceCode,
-                    'newStatus'     => $status,
-                ]);
-            }
+        if ($type !== 'pix.in.confirmation') {
+            Log::warning('[PluggouWebhook] Tipo ignorado: ' . ($type ?? 'N/A'));
+            return;
         }
 
-        // → adicione outras regras conforme necessidade
+        $data = $payload['data'] ?? [];
+
+        $referenceCode = $data['referenceCode'] ?? null;
+        $statusPluggou = $data['status'] ?? null;
+
+        if (!$referenceCode || !$statusPluggou) {
+            Log::warning('[PluggouWebhook] Dados incompletos no payload', [
+                'referenceCode' => $referenceCode,
+                'status'        => $statusPluggou,
+            ]);
+            return;
+        }
+
+        $transaction = PixTransaction::where('reference_code', $referenceCode)->first();
+
+        if (!$transaction) {
+            Log::warning('[PluggouWebhook] Transação não encontrada', [
+                'referenceCode' => $referenceCode,
+            ]);
+            return;
+        }
+
+        if ($transaction->status === 'paid') {
+            Log::info('[PluggouWebhook] Transação já marcada como paga', [
+                'referenceCode' => $referenceCode,
+            ]);
+            return;
+        }
+
+        // Converte status da Pluggou para o do seu sistema
+        if ($statusPluggou === 'APPROVED') {
+            $transaction->update(['status' => 'paid']);
+
+            $user = $transaction->user;
+            if ($user) {
+                $valor = $transaction->amount;
+                $taxa  = $user->taxa_cash_in ?? 0;
+                $valorLiquido = intval(round($valor * (1 - ($taxa / 100))));
+
+                $user->increment('saldo', $valorLiquido);
+
+                Log::info('[PluggouWebhook] 💰 PIX aprovado via webhook', [
+                    'user_id'         => $user->id,
+                    'referenceCode'   => $referenceCode,
+                    'valor_bruto'     => $valor,
+                    'taxa'            => $taxa,
+                    'valor_liquido'   => $valorLiquido,
+                    'novo_saldo'      => $user->fresh()->saldo,
+                ]);
+            } else {
+                Log::warning('[PluggouWebhook] Usuário não encontrado para transação', [
+                    'referenceCode' => $referenceCode,
+                ]);
+            }
+        } else {
+            Log::info('[PluggouWebhook] Status não tratado: ' . $statusPluggou, [
+                'referenceCode' => $referenceCode,
+            ]);
+        }
     }
 }
