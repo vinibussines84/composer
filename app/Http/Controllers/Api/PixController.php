@@ -40,10 +40,10 @@ class PixController extends Controller
         ]);
 
         $rawAmount   = $validated['amount'];
-        $amountCents = (int) round($rawAmount * 100);
+        $amountCents = (int) round($rawAmount * 100); // para salvar no banco em centavos
 
         $payload = [
-            'amount'               => $amountCents,
+            'amount'               => $rawAmount, // 👈 ENVIA EM REAIS
             'customerName'         => $user->name ?: 'Cliente TrustGateway',
             'customerEmail'        => $user->email ?: 'no-reply@trustgateway.io',
             'customerPhone'        => $user->phone ?: '',
@@ -88,7 +88,7 @@ class PixController extends Controller
                 'external_transaction_id' => $data['id'],
                 'reference_code'          => $referenceCode,
                 'txid'                    => $txid,
-                'amount'                  => $amountCents,
+                'amount'                  => $amountCents, // armazenar em centavos
                 'status'                  => $data['status'],
                 'pix'                     => $data['pix'],
                 'created_at_api'          => Carbon::parse($data['paymentInfo']['createdAt'])->utc(),
