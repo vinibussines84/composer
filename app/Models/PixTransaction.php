@@ -17,6 +17,7 @@ class PixTransaction extends Model
         'authkey',
         'gtkey',
         'external_transaction_id',
+         'reference_code',
         'amount',
         'status',
         'pix',
