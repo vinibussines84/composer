@@ -52,11 +52,10 @@ class PixTransactionResource extends Resource
 
                 IconColumn::make('status')
                     ->label('Status')
-                    ->icon(fn (string $state): string => match ($state) {
+                    ->icon(fn (string $state): string => match (strtolower($state)) {
                         'waiting_payment' => 'heroicon-o-clock',
                         'pending' => 'heroicon-o-adjustments-horizontal',
-                        'approved' => 'heroicon-o-check-circle',
-                        'paid' => 'heroicon-o-check-badge',
+                        'approved', 'paid' => 'heroicon-o-check-badge',
                         'refused' => 'heroicon-o-x-circle',
                         'cancelled' => 'heroicon-o-ban',
                         'chargeback' => 'heroicon-o-arrow-uturn-left',
@@ -64,7 +63,7 @@ class PixTransactionResource extends Resource
                         'refunded' => 'heroicon-o-arrow-path-rounded-square',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match (strtolower($state)) {
                         'approved', 'paid' => 'success',
                         'waiting_payment', 'pending' => 'warning',
                         'refused', 'cancelled', 'chargeback', 'in_protest', 'refunded' => 'danger',
