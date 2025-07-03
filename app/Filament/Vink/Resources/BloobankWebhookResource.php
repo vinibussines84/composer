@@ -48,19 +48,19 @@ class BloobankWebhookResource extends Resource
                 Tables\Columns\TextColumn::make('nickname')
                     ->label('Nickname')
                     ->getStateUsing(fn (BloobankWebhook $record) => 
-                        json_decode($record->payload, true)['body']['customer']['nickname'] ?? '-'),
+                        json_decode($record->payload, true)['data']['customerName'] ?? '-'),
 
                 Tables\Columns\TextColumn::make('transaction_id')
                     ->label('Transaction ID')
                     ->getStateUsing(fn (BloobankWebhook $record) => 
-                        json_decode($record->payload, true)['body']['id'] ?? '-'),
+                        json_decode($record->payload, true)['data']['id'] ?? '-'),
 
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Amount (Value)')
                     ->getStateUsing(function (BloobankWebhook $record) {
                         $data = json_decode($record->payload, true);
-                        return isset($data['body']['amount']['value']) 
-                            ? number_format($data['body']['amount']['value'] / 100, 2, ',', '.') . ' BRL'
+                        return isset($data['data']['amount']) 
+                            ? 'R$ ' . number_format($data['data']['amount'], 2, ',', '.')
                             : '-';
                     }),
 
