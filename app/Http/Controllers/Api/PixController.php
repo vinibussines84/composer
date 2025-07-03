@@ -12,11 +12,6 @@ use Carbon\Carbon;
 
 class PixController extends Controller
 {
-    /**
-     * POST /api/pix
-     * Headers  : authkey / gtkey
-     * Body JSON: { "amount": <valor em reais> }
-     */
     public function handle(Request $request)
     {
         Log::info('Recebendo requisição Pix', [
@@ -24,9 +19,6 @@ class PixController extends Controller
             'body'    => $request->all(),
         ]);
 
-        /* -----------------------------------------------------------------
-         | 1. Autenticação
-         |-----------------------------------------------------------------*/
         $authkey = $request->header('authkey');
         $gtkey   = $request->header('gtkey');
 
@@ -43,28 +35,22 @@ class PixController extends Controller
             return response()->json(['error' => 'CashIn desativado para este usuário'], 403);
         }
 
-        /* -----------------------------------------------------------------
-         | 2. Validação e conversão do amount
-         |-----------------------------------------------------------------*/
         $validated = $request->validate([
             'amount' => 'required|numeric|min:0.01',
         ]);
 
-        $rawAmount     = $validated['amount'];              // 93 ou 93.50
+        $rawAmount     = $validated['amount'];
         $hasDecimals   = fmod($rawAmount, 1.0) !== 0.0;
         $amountPlg     = $hasDecimals ? (int) round($rawAmount * 100) : (int) $rawAmount;
-        $amountCents   = (int) round($rawAmount * 100);     // sempre centavos p/ BD
+        $amountCents   = (int) round($rawAmount * 100);
 
-        /* -----------------------------------------------------------------
-         | 3. Monta payload automático
-         |-----------------------------------------------------------------*/
         $payload = [
             'amount'               => $amountPlg,
-            'customerName'         => $user->name                ?: 'Cliente TrustGateway',
-            'customerEmail'        => $user->email               ?: 'no-reply@trustgateway.io',
-            'customerPhone'        => $user->phone               ?: '',
-            'customerDocument'     => $user->document            ?: '',
-            'customerDocumentType' => $user->document_type       ?: 'cpf',
+            'customerName'         => $user->name ?: 'Cliente TrustGateway',
+            'customerEmail'        => $user->email ?: 'no-reply@trustgateway.io',
+            'customerPhone'        => $user->phone ?: '',
+            'customerDocument'     => $user->document ?: '',
+            'customerDocumentType' => $user->document_type ?: 'cpf',
             'description'          => 'Depósito via Pix - ' . ($user->name ?: 'Cliente'),
             'metadata'             => [
                 'user_id'    => $user->id,
@@ -75,17 +61,14 @@ class PixController extends Controller
         $payload             = array_filter($payload, fn ($v) => $v !== '' && $v !== null);
         $payload['metadata'] = array_filter($payload['metadata']);
 
-        /* -----------------------------------------------------------------
-         | 4. Chamada à Pluggou
-         |-----------------------------------------------------------------*/
         try {
             $pluggou  = new PluggouService();
             $response = $pluggou->createPix($payload);
             $data     = $response['json'];
 
-            $referenceCode = $data['referenceCode']   ?? $data['id'];
-            $qrCode        = $data['pix']['qrCode']['emv']   ?? null;
-            $txid          = $data['pix']['txid']            ?? null;
+            $referenceCode = $data['referenceCode'] ?? $data['id'];
+            $qrCode        = $data['pix']['qrCode']['emv'] ?? null;
+            $txid          = $data['pix']['txid'] ?? null;
 
             if (!$qrCode) {
                 Log::error('Resposta Pluggou sem qrCode.emv', $data);
@@ -95,9 +78,6 @@ class PixController extends Controller
                 ], 502);
             }
 
-            /* -----------------------------------------------------------------
-             | 5. Persistência local
-             |-----------------------------------------------------------------*/
             PixTransaction::create([
                 'user_id'                 => $user->id,
                 'authkey'                 => $authkey,
@@ -112,18 +92,13 @@ class PixController extends Controller
                 'created_at_api'          => Carbon::parse($data['paymentInfo']['createdAt'])->utc(),
             ]);
 
-            /* -----------------------------------------------------------------
-             | 6. Resposta enxuta para o caller
-             |     “id” mostra agora o referenceCode (tx_...)
-             |-----------------------------------------------------------------*/
             return response()->json([
-                'id'        => $referenceCode,                            // tx_1751548181905_683
+                'id'        => $referenceCode,
                 'status'    => $data['status'],
                 'amount'    => number_format($amountCents / 100, 2, '.', ''),
                 'copypaste' => $qrCode,
                 'txid'      => $txid ?: $data['id'],
             ]);
-
         } catch (\Throwable $e) {
             Log::error('Erro ao criar Pix Pluggou', [
                 'message' => $e->getMessage(),
@@ -134,9 +109,6 @@ class PixController extends Controller
         }
     }
 
-    /**
-     * GET /api/pix/status?id=<external_id>
-     */
     public function status(Request $request)
     {
         $request->validate(['id' => 'required|string']);
