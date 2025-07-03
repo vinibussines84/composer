@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class PluggouService
 {
@@ -21,15 +22,11 @@ class PluggouService
         $this->organizationId = config('services.pluggou.organization_id');
     }
 
-    /* -----------------------------------------------------------------
-     |  Métodos públicos
-     |-----------------------------------------------------------------*/
-
     /**
      * Cria uma transação PIX.
      *
-     * @param  array  $data  Campos obrigatórios: amount (centavos), customerName, customerEmail
-     * @return array [status, ok, json, body]
+     * @param  array  $data
+     * @return array
      */
     public function createPix(array $data): array
     {
@@ -37,7 +34,15 @@ class PluggouService
             'organizationId' => $this->organizationId,
         ]);
 
+        $start = microtime(true);
+
         $response = $this->client()->post("{$this->baseUrl}/transactions", $payload);
+
+        $duration = microtime(true) - $start;
+        Log::info('⏱️ Pluggou - Tempo de resposta createPix', [
+            'tempo_em_segundos' => round($duration, 3),
+            'status_http' => $response->status(),
+        ]);
 
         return $this->wrap($response);
     }
@@ -45,7 +50,7 @@ class PluggouService
     /**
      * Lista transações PIX (paginável).
      *
-     * @param  array  $query  Ex.: ['page' => 2, 'perPage' => 50]
+     * @param  array  $query
      * @return array
      */
     public function listPix(array $query = []): array
@@ -59,33 +64,14 @@ class PluggouService
         return $this->wrap($response);
     }
 
-    /**
-     * Busca transação PIX por ID.
-     *
-     * @param  string  $id
-     * @return array
-     */
-    public function fetchPix(string $id): array
-    {
-        $response = $this->client()->get(
-            "{$this->baseUrl}/transactions/{$id}",
-            ['organizationId' => $this->organizationId]
-        );
-
-        return $this->wrap($response);
-    }
-
-    /* -----------------------------------------------------------------
-     |  Helpers privados
-     |-----------------------------------------------------------------*/
-
-    /** Cria o client HTTP com cabeçalhos fixos. */
+    /** Cria o client HTTP com cabeçalhos fixos e timeout curto. */
     private function client()
     {
-        return Http::withHeaders([
-            'X-API-Key'    => $this->apiKey,
-            'Content-Type' => 'application/json',
-        ]);
+        return Http::timeout(3)
+            ->withHeaders([
+                'X-API-Key'    => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ]);
     }
 
     /**
