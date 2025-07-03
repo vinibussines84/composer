@@ -39,13 +39,11 @@ class PixController extends Controller
             'amount' => 'required|numeric|min:0.01',
         ]);
 
-        $rawAmount     = $validated['amount'];
-        $hasDecimals   = fmod($rawAmount, 1.0) !== 0.0;
-        $amountPlg     = $hasDecimals ? (int) round($rawAmount * 100) : (int) $rawAmount;
-        $amountCents   = (int) round($rawAmount * 100);
+        $rawAmount   = $validated['amount'];
+        $amountCents = (int) round($rawAmount * 100);
 
         $payload = [
-            'amount'               => $amountPlg,
+            'amount'               => $amountCents,
             'customerName'         => $user->name ?: 'Cliente TrustGateway',
             'customerEmail'        => $user->email ?: 'no-reply@trustgateway.io',
             'customerPhone'        => $user->phone ?: '',
