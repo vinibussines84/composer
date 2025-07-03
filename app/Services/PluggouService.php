@@ -41,7 +41,7 @@ class PluggouService
         $duration = microtime(true) - $start;
         Log::info('⏱️ Pluggou - Tempo de resposta createPix', [
             'tempo_em_segundos' => round($duration, 3),
-            'status_http' => $response->status(),
+            'status_http'       => $response->status(),
         ]);
 
         return $this->wrap($response);
@@ -64,10 +64,11 @@ class PluggouService
         return $this->wrap($response);
     }
 
-    /** Cria o client HTTP com cabeçalhos fixos e timeout curto. */
+    /** Cria o client HTTP com cabeçalhos, timeout e retry configurados. */
     private function client()
     {
-        return Http::timeout(3)
+        return Http::timeout(5) // Tempo máximo de 5 segundos
+            ->retry(2, 200)     // Tenta até 3 vezes se falhar (200ms entre tentativas)
             ->withHeaders([
                 'X-API-Key'    => $this->apiKey,
                 'Content-Type' => 'application/json',
