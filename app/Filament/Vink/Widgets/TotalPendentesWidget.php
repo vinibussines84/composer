@@ -14,38 +14,37 @@ class TotalPendentesWidget extends BaseWidget
     {
         $hoje = Carbon::today();
 
-        // 🔸 Pendentes Pluggou Hoje
-        $webhooksHoje = PluggouWebhook::whereDate('created_at', $hoje)->get();
-
-        $pendentesHoje = $webhooksHoje->filter(function (PluggouWebhook $record) {
-            // como $record->payload já é array, acessamos direto:
-            $data = $record->payload['data'] ?? [];
-            return ($data['status'] ?? null) === 'pending';
-        });
-
-        // supondo que em Pluggou o 'amount' já vem em reais (ex: 14844.56)
-        $valorPendentes = $pendentesHoje->sum(function (PluggouWebhook $record) {
-            $data = $record->payload['data'] ?? [];
-            return $data['amount'] ?? 0;
-        });
-
-        $qtdPendentes = $pendentesHoje->count();
-
-        // ✅ Pagos Hoje (PixTransaction status = paid)
-        $pagasHoje = PixTransaction::where('status', 'paid')
+        /**
+         * 🔸 Pendentes Pluggou (status = 'pending' no banco)
+         */
+        $pendentesHoje = PluggouWebhook::where('status', 'pending')
             ->whereDate('created_at', $hoje)
             ->get();
 
-        $valorPagos = $pagasHoje->sum('amount');
-        $qtdPagos   = $pagasHoje->count();
+        $qtdPendentes = $pendentesHoje->count();
+
+        $valorPendentes = $pendentesHoje->sum(function ($r) {
+            $data = $r->payload['data'] ?? [];
+            return $data['amount'] ?? 0;
+        });
+
+        /**
+         * ✅ Pix pagos hoje (status = 'paid')
+         */
+        $pagosHoje = PixTransaction::where('status', 'paid')
+            ->whereDate('created_at', $hoje)
+            ->get();
+
+        $qtdPagos = $pagosHoje->count();
+        $valorPagos = $pagosHoje->sum('amount'); // valor em centavos
 
         return [
             Card::make('Pendentes Pluggou', 'R$ ' . number_format($valorPendentes, 2, ',', '.'))
-                ->description($qtdPendentes . ' pendentes hoje')
+                ->description("{$qtdPendentes} pendentes hoje")
                 ->color('warning'),
 
             Card::make('Pagos Hoje', 'R$ ' . number_format($valorPagos / 100, 2, ',', '.'))
-                ->description($qtdPagos . ' pagos hoje')
+                ->description("{$qtdPagos} pagos hoje")
                 ->color('success'),
         ];
     }
