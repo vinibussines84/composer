@@ -14,27 +14,24 @@ class TotalPendentesWidget extends BaseWidget
     {
         $hoje = Carbon::today();
 
-        //
         // 🔸 Pendentes Pluggou Hoje
-        //
         $webhooksHoje = PluggouWebhook::whereDate('created_at', $hoje)->get();
 
-        $pendentesHoje = $webhooksHoje->filter(function ($record) {
-            $data = json_decode($record->payload, true)['data'] ?? [];
+        $pendentesHoje = $webhooksHoje->filter(function (PluggouWebhook $record) {
+            // como $record->payload já é array, acessamos direto:
+            $data = $record->payload['data'] ?? [];
             return ($data['status'] ?? null) === 'pending';
         });
 
-        // Supondo que em Pluggou o 'amount' já vem em reais (ex: 14844.56)
-        $valorPendentes = $pendentesHoje->sum(function ($record) {
-            $data = json_decode($record->payload, true)['data'] ?? [];
+        // supondo que em Pluggou o 'amount' já vem em reais (ex: 14844.56)
+        $valorPendentes = $pendentesHoje->sum(function (PluggouWebhook $record) {
+            $data = $record->payload['data'] ?? [];
             return $data['amount'] ?? 0;
         });
 
         $qtdPendentes = $pendentesHoje->count();
 
-        //
         // ✅ Pagos Hoje (PixTransaction status = paid)
-        //
         $pagasHoje = PixTransaction::where('status', 'paid')
             ->whereDate('created_at', $hoje)
             ->get();
