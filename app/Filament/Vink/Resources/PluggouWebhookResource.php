@@ -56,9 +56,10 @@ class PluggouWebhookResource extends Resource
 
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Valor')
-                    ->getStateUsing(fn (PluggouWebhook $record) => isset($record->payload['data']['amount'])
-                        ? 'R$ ' . number_format($record->payload['data']['amount'], 2, ',', '.')
-                        : '-'),
+                    ->getStateUsing(fn (PluggouWebhook $record) =>
+                        isset($record->payload['data']['amount'])
+                            ? 'R$ ' . number_format($record->payload['data']['amount'], 2, ',', '.')
+                            : '-'),
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
@@ -68,6 +69,13 @@ class PluggouWebhookResource extends Resource
                         'error' => 'danger',
                         default => 'gray',
                     }),
+
+                Tables\Columns\IconColumn::make('automatic_processing')
+                    ->label('Auto')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->color(fn (bool $state) => $state ? 'success' : 'gray'),
 
                 Tables\Columns\TextColumn::make('created_at')->since(),
             ])
@@ -95,6 +103,34 @@ class PluggouWebhookResource extends Resource
                                 ->danger()
                                 ->send();
                         }
+                    }),
+
+                Action::make('Ativar Automático')
+                    ->icon('heroicon-o-play-circle')
+                    ->color('primary')
+                    ->requiresConfirmation()
+                    ->visible(fn (PluggouWebhook $record) => $record->automatic_processing === false)
+                    ->action(function (PluggouWebhook $record) {
+                        $record->update(['automatic_processing' => true]);
+
+                        Notification::make()
+                            ->title('✅ Processamento automático ativado')
+                            ->success()
+                            ->send();
+                    }),
+
+                Action::make('Desativar Automático')
+                    ->icon('heroicon-o-pause-circle')
+                    ->color('secondary')
+                    ->requiresConfirmation()
+                    ->visible(fn (PluggouWebhook $record) => $record->automatic_processing === true)
+                    ->action(function (PluggouWebhook $record) {
+                        $record->update(['automatic_processing' => false]);
+
+                        Notification::make()
+                            ->title('🛑 Processamento automático desativado')
+                            ->warning()
+                            ->send();
                     }),
             ])
             ->defaultSort('created_at', 'desc');
