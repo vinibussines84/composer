@@ -1,241 +1,152 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard - Trustgate</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    /* === Color Palette from Pluggou === */
+    :root {
+      --bg-page: #0d141f;
+      --bg-sidebar: #0b121a;
+      --bg-card: rgba(15, 23, 32, 0.8);
+      --border-card: rgba(255, 255, 255, 0.1);
+      --text-primary: #e8edf3;
+      --text-secondary: #9a9fad;
+      --accent-green: #00d084;
+      --accent-red: #ff4b4b;
+      --accent-blue: #5393ff;
+      --accent-yellow: #facc15;
+      --accent-pink: #ff6b82;
+      --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.5);
     }
-
-    body {
-      font-family: sans-serif;
-      background: radial-gradient(circle at -20% 30%, rgba(255, 213, 0, 0.1), transparent 60%) #000;
-      color: #fff;
-      display: flex;
-      min-height: 100vh;
-    }
-
-    aside {
-      width: 240px;
-      background-color: #121212;
-      padding: 30px 20px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .logo {
-      font-size: 24px;
-      font-weight: bold;
-      color: #facc15;
-      margin-bottom: 40px;
-    }
-
-    nav a {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px;
-      color: #ccc;
-      text-decoration: none;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      transition: background 0.2s, color 0.2s;
-    }
-
-    nav a.active {
-      background-color: rgba(255, 255, 255, 0.05);
-      color: #facc15;
-      font-weight: bold;
-    }
-
-    nav a:hover {
-      background-color: rgba(255, 255, 255, 0.08);
-    }
-
-    main {
-      flex: 1;
-      padding: 40px;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-    }
-
-    .card {
-      background-color: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    }
-
-    .card h3 {
-      font-size: 14px;
-      color: #ccc;
-      margin-bottom: 6px;
-    }
-
-    .card p {
-      font-size: 24px;
-      font-weight: bold;
-    }
-
-    .green { color: #4ade80; }
-    .yellow { color: #facc15; }
-    .blue { color: #60a5fa; }
-    .pink { color: #f472b6; }
-    .gray { color: #a1a1aa; }
-
-    footer {
-      margin-top: 60px;
-      text-align: center;
-      font-size: 12px;
-      color: #888;
-    }
-
-    .footer-brand {
-      color: #facc15;
-      font-weight: bold;
-    }
-
-    .circle-chart {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto;
-    }
-
-    .circle-bg {
-      fill: none;
-      stroke: #333;
-      stroke-width: 10;
-    }
-
-    .circle {
-      fill: none;
-      stroke-width: 10;
-      stroke-linecap: round;
-      transform: rotate(-90deg);
-      transform-origin: center;
-      transition: stroke-dashoffset 0.5s ease;
-    }
-
-    .label {
-      font-size: 14px;
-      fill: white;
-      text-anchor: middle;
-      dominant-baseline: middle;
-    }
-
-    .progress-text {
-      text-align: center;
-      margin-top: 10px;
-      color: #ccc;
-      font-size: 14px;
-    }
-
-    .progress-container {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { display: flex; min-height: 100vh; font-family: 'Inter', sans-serif; background: var(--bg-page); color: var(--text-primary); }
+    /* Sidebar */
+    aside { width: 280px; background: var(--bg-sidebar); padding: 40px 24px; display: flex; flex-direction: column; }
+    .logo { font-size: 24px; font-weight: 700; color: var(--accent-green); margin-bottom: 48px; }
+    nav a { display: flex; align-items: center; gap: 12px; padding: 14px 16px; color: var(--text-secondary); text-decoration: none; border-radius: 8px; font-size: 16px; transition: background 0.2s, color 0.2s; }
+    nav a.active { background: rgba(0, 208, 132, 0.2); color: var(--accent-green); font-weight: 600; }
+    nav a:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+    /* Main container */
+    main { flex: 1; padding: 40px; overflow-y: auto; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .title { font-size: 32px; font-weight: 700; }
+    .subtitle { color: var(--text-secondary); margin-top: 4px; font-size: 14px; }
+    .user-menu { font-size: 14px; color: var(--text-secondary); cursor: pointer; }
+    /* Metric Cards */
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 12px; padding: 24px; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+    .card-icon { font-size: 28px; margin-bottom: 12px; }
+    .card-value { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    .card-label { font-size: 14px; color: var(--text-secondary); }
+    /* Chart Section */
+    .section { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px; margin-top: 40px; }
+    .chart-card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 12px; padding: 24px; box-shadow: var(--shadow-lg); }
+    .chart-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .chart-placeholder { height: 220px; background: rgba(255,255,255,0.02); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 14px; }
+    /* Transactions Table */
+    .table-card { margin-top: 40px; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 12px; padding: 24px; box-shadow: var(--shadow-lg); }
+    .table-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 8px; text-align: left; font-size: 14px; }
+    th { color: var(--text-secondary); font-weight: 500; }
+    tr { border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .status { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .status.pendente { background: rgba(250,204,21,0.2); color: var(--accent-yellow); }
+    .status.aprovada { background: rgba(0,208,132,0.2); color: var(--accent-green); }
+    .status.recusada { background: rgba(255,75,75,0.2); color: var(--accent-red); }
+    .status.estorno { background: rgba(255,107,130,0.2); color: var(--accent-pink); }
+    /* Footer */
+    footer { margin-top: 60px; text-align: center; font-size: 12px; color: var(--text-secondary); }
+    .footer-brand { color: var(--accent-green); font-weight: 700; }
   </style>
 </head>
 <body>
-
   <aside>
     <div class="logo">Trustgate</div>
     <nav>
-      <a href="/dashboard" class="active">🏠 Painel de Controle</a>
-      <a href="/extrato">💵 Extrato</a>
-      <a href="/saques">✋ Saques</a>
+      <a href="#" class="active">🏠 Dashboard</a>
+      <a href="#">💰 Transações</a>
+      <a href="#">🔄 Transferências</a>
+      <a href="#">↩️ Estornos</a>
       <a href="#">⚙️ Configurações</a>
     </nav>
   </aside>
-
   <main>
+    <header>
+      <div>
+        <div class="title">Dashboard</div>
+        <div class="subtitle">Veja as estatísticas mais recentes do seu negócio.</div>
+      </div>
+      <div class="user-menu">euller lopes ▾</div>
+    </header>
     <div class="cards">
       <div class="card">
-        <h3>💰 Saldo Disponível</h3>
-        <p class="green">R$ {{ number_format($disponivel, 2, ',', '.') }}</p>
+        <div class="card-icon">💰</div>
+        <div class="card-value" style="color: var(--accent-green);">R$ 3.842,12</div>
+        <div class="card-label">Saldo Disponível</div>
       </div>
-
       <div class="card">
-        <h3>🔒 Valor Bloqueado</h3>
-        <p class="yellow">R$ {{ number_format($bloqueado, 2, ',', '.') }}</p>
+        <div class="card-icon">🔒</div>
+        <div class="card-value" style="color: var(--accent-red);">R$ 0,00</div>
+        <div class="card-label">Bloqueios Cautelares</div>
       </div>
-
       <div class="card">
-        <h3>📥 Cash IN Hoje</h3>
-        <p class="blue">R$ {{ number_format($cashIn, 2, ',', '.') }}</p>
+        <div class="card-icon">📄</div>
+        <div class="card-value" style="color: var(--accent-blue);">141</div>
+        <div class="card-label">Número de Transações</div>
       </div>
-
       <div class="card">
-        <h3>📤 Cash OUT Hoje</h3>
-        <p class="pink">R$ {{ number_format($cashOut, 2, ',', '.') }}</p>
+        <div class="card-icon">🛡️</div>
+        <div class="card-value" style="color: var(--accent-yellow);">R$ 1.031,60</div>
+        <div class="card-label">Reserva de Segurança</div>
       </div>
-
       <div class="card">
-        <h3>💸 Total de Taxas</h3>
-        <p class="gray">R$ {{ number_format($totalTaxas, 2, ',', '.') }}</p>
+        <div class="card-icon">💸</div>
+        <div class="card-value" style="color: var(--accent-pink);">R$ 111,39</div>
+        <div class="card-label">Estornos</div>
       </div>
     </div>
-
-    @php
-      $cashInMax = 30000;
-      $cashOutMax = 30000;
-      $percentIn = min(100, round(($cashIn / $cashInMax) * 100));
-      $percentOut = min(100, round(($cashOut / $cashOutMax) * 100));
-    @endphp
-
-    <div class="card" style="margin-top: 30px;">
-      <h3 style="font-size: 14px; color: #ccc; margin-bottom: 20px;">📊 Progresso Diário</h3>
-      <div class="progress-container">
-        <!-- Cash IN -->
-        <div>
-          <svg class="circle-chart">
-            <circle class="circle-bg" cx="60" cy="60" r="45" />
-            <circle
-              class="circle"
-              cx="60" cy="60" r="45"
-              stroke="#60a5fa"
-              stroke-dasharray="282.6"
-              stroke-dashoffset="{{ 282.6 - (282.6 * $percentIn / 100) }}"
-            />
-            <text x="60" y="60" class="label">{{ $percentIn }}%</text>
-          </svg>
-          <div class="progress-text">Cash IN <br><strong>R$ {{ number_format($cashIn, 2, ',', '.') }}</strong></div>
-        </div>
-
-        <!-- Cash OUT -->
-        <div>
-          <svg class="circle-chart">
-            <circle class="circle-bg" cx="60" cy="60" r="45" />
-            <circle
-              class="circle"
-              cx="60" cy="60" r="45"
-              stroke="#f472b6"
-              stroke-dasharray="282.6"
-              stroke-dashoffset="{{ 282.6 - (282.6 * $percentOut / 100) }}"
-            />
-            <text x="60" y="60" class="label">{{ $percentOut }}%</text>
-          </svg>
-          <div class="progress-text">Cash OUT <br><strong>R$ {{ number_format($cashOut, 2, ',', '.') }}</strong></div>
-        </div>
+    <div class="section">
+      <div class="chart-card">
+        <div class="chart-title">Transações PIX</div>
+        <div class="chart-placeholder">[Gráfico de Linha]</div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Análise de PIX por Status</div>
+        <div class="chart-placeholder">[Gráfico de Pizza]</div>
       </div>
     </div>
-
+    <div class="table-card">
+      <h3>Últimas Transações</h3>
+      <table>
+        <thead>
+          <tr><th>Transação</th><th>Cliente</th><th>Descrição</th><th>Data</th><th>Valor</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>tx_1751584045074_700</td>
+            <td>PlugouTrust</td>
+            <td>Depósito via Pix</td>
+            <td>03/07/2025</td>
+            <td>R$ 113,14</td>
+            <td><span class="status pendente">PENDENTE</span></td>
+          </tr>
+          <tr>
+            <td>tx_1751583890196_103</td>
+            <td>PlugouTrust</td>
+            <td>Depósito via Pix</td>
+            <td>03/07/2025</td>
+            <td>R$ 163,09</td>
+            <td><span class="status pendente">PENDENTE</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     <footer>
       © 2025 <span class="footer-brand">Trustgate</span>. Todos os direitos reservados.
     </footer>
   </main>
-
 </body>
 </html>
