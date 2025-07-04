@@ -70,13 +70,6 @@ class PluggouWebhookResource extends Resource
                         default => 'gray',
                     }),
 
-                Tables\Columns\IconColumn::make('automatic_processing')
-                    ->label('Auto')
-                    ->boolean()
-                    ->trueIcon('heroicon-o-check-circle')
-                    ->falseIcon('heroicon-o-x-circle')
-                    ->color(fn (bool $state) => $state ? 'success' : 'gray'),
-
                 Tables\Columns\TextColumn::make('created_at')->since(),
             ])
             ->actions([
@@ -104,32 +97,22 @@ class PluggouWebhookResource extends Resource
                                 ->send();
                         }
                     }),
-
-                Action::make('Ativar Automático')
-                    ->icon('heroicon-o-play-circle')
-                    ->color('primary')
-                    ->requiresConfirmation()
-                    ->visible(fn (PluggouWebhook $record) => $record->automatic_processing === false)
-                    ->action(function (PluggouWebhook $record) {
-                        $record->update(['automatic_processing' => true]);
+            ])
+            ->headerActions([
+                Action::make('alternar-processamento-automatico')
+                    ->label(fn () => cache('pluggou.auto_process', false)
+                        ? '🔴 Desativar Automático'
+                        : '🟢 Ativar Automático')
+                    ->color(fn () => cache('pluggou.auto_process', false) ? 'danger' : 'success')
+                    ->action(function () {
+                        $atual = cache('pluggou.auto_process', false);
+                        cache()->forever('pluggou.auto_process', ! $atual);
 
                         Notification::make()
-                            ->title('✅ Processamento automático ativado')
+                            ->title($atual
+                                ? '🛑 Processamento automático desativado'
+                                : '✅ Processamento automático ativado')
                             ->success()
-                            ->send();
-                    }),
-
-                Action::make('Desativar Automático')
-                    ->icon('heroicon-o-pause-circle')
-                    ->color('secondary')
-                    ->requiresConfirmation()
-                    ->visible(fn (PluggouWebhook $record) => $record->automatic_processing === true)
-                    ->action(function (PluggouWebhook $record) {
-                        $record->update(['automatic_processing' => false]);
-
-                        Notification::make()
-                            ->title('🛑 Processamento automático desativado')
-                            ->warning()
                             ->send();
                     }),
             ])

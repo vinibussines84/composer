@@ -9,6 +9,14 @@ class PluggouWebhookProcessor
 {
     public function process(array $payload): void
     {
+        // ✅ Verifica se o modo automático está ativado
+        if (! cache('pluggou.auto_process', false)) {
+            Log::info('[PluggouWebhook] ❌ Auto-processamento desativado — ignorando', [
+                'referenceCode' => $payload['data']['referenceCode'] ?? null,
+            ]);
+            return;
+        }
+
         $type = $payload['type'] ?? null;
 
         if ($type !== 'pix.in.confirmation') {
