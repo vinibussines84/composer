@@ -2,7 +2,7 @@
 
 namespace App\Filament\Vink\Widgets;
 
-use App\Models\BloobankWebhook;
+use App\Models\PluggouWebhook;
 use App\Models\PixTransaction;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Card;
@@ -14,23 +14,27 @@ class TotalPendentesWidget extends BaseWidget
     {
         $hoje = Carbon::today();
 
-        // 🔸 Pendentes da Pluggou Hoje
-        $webhooksHoje = BloobankWebhook::whereDate('created_at', $hoje)->get();
+        //
+        // 🔸 Pendentes Pluggou Hoje
+        //
+        $webhooksHoje = PluggouWebhook::whereDate('created_at', $hoje)->get();
 
         $pendentesHoje = $webhooksHoje->filter(function ($record) {
             $data = json_decode($record->payload, true)['data'] ?? [];
             return ($data['status'] ?? null) === 'pending';
         });
 
+        // Supondo que em Pluggou o 'amount' já vem em reais (ex: 14844.56)
         $valorPendentes = $pendentesHoje->sum(function ($record) {
             $data = json_decode($record->payload, true)['data'] ?? [];
-            // aqui 'amount' já vem em centavos
             return $data['amount'] ?? 0;
         });
 
         $qtdPendentes = $pendentesHoje->count();
 
+        //
         // ✅ Pagos Hoje (PixTransaction status = paid)
+        //
         $pagasHoje = PixTransaction::where('status', 'paid')
             ->whereDate('created_at', $hoje)
             ->get();
@@ -39,7 +43,7 @@ class TotalPendentesWidget extends BaseWidget
         $qtdPagos   = $pagasHoje->count();
 
         return [
-            Card::make('Pendentes Pluggou', 'R$ ' . number_format($valorPendentes / 100, 2, ',', '.'))
+            Card::make('Pendentes Pluggou', 'R$ ' . number_format($valorPendentes, 2, ',', '.'))
                 ->description($qtdPendentes . ' pendentes hoje')
                 ->color('warning'),
 
