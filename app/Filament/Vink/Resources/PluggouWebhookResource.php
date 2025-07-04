@@ -6,11 +6,12 @@ use App\Filament\Vink\Resources\PluggouWebhookResource\Pages;
 use App\Models\PluggouWebhook;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Table;
 
 class PluggouWebhookResource extends Resource
 {
@@ -104,7 +105,25 @@ class PluggouWebhookResource extends Resource
                         ? '🔴 Desativar Automático'
                         : '🟢 Ativar Automático')
                     ->color(fn () => cache('pluggou.auto_process', false) ? 'danger' : 'success')
-                    ->action(function () {
+                    ->form([
+                        TextInput::make('pin')
+                            ->label('Digite o PIN')
+                            ->password()
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+                        $pinCorreto = '2244';
+
+                        if ($data['pin'] !== $pinCorreto) {
+                            Notification::make()
+                                ->title('❌ PIN incorreto')
+                                ->body('Você não tem permissão para ativar essa função.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
                         $atual = cache('pluggou.auto_process', false);
                         cache()->forever('pluggou.auto_process', ! $atual);
 
