@@ -13,86 +13,40 @@ class TotalPendentesWidget extends BaseWidget
     protected function getCards(): array
     {
         $hoje = Carbon::today();
-        $inicioSemana = Carbon::now()->startOfWeek();
 
-        /**
-         * 🔸 Total Pendentes Hoje
-         */
-        $pendentesHoje = BloobankWebhook::where('status', 'pending')
+        //
+        // 🔸 Pendentes da Pluggou Hoje
+        //
+        $webhooksHoje = BloobankWebhook::whereDate('created_at', $hoje)->get();
+
+        $pendentesHoje = $webhooksHoje
+            ->filter(fn ($record) => 
+                json_decode($record->payload, true)['body']['status'] ?? null === 'pending'
+            );
+
+        $valorPendentes = $pendentesHoje
+            ->sum(fn ($record) => json_decode($record->payload, true)['body']['amount']['value'] ?? 0);
+
+        $qtdPendentes = $pendentesHoje->count();
+
+        //
+        // ✅ Pagos Hoje (PixTransaction status = paid)
+        //
+        $pagasHoje = PixTransaction::where('status', 'paid')
             ->whereDate('created_at', $hoje)
             ->get();
 
-        $valorPendentesHoje = $pendentesHoje->sum(function ($webhook) {
-            $payload = json_decode($webhook->payload, true);
-            return $payload['body']['amount']['value'] ?? 0;
-        });
+        $valorPagos = $pagasHoje->sum('amount');
+        $qtdPagos   = $pagasHoje->count();
 
-        $qtdPendentesHoje = $pendentesHoje->count();
-
-        /**
-         * ✅ Total Pagos Hoje (status 'approved' no payload)
-         */
-        $aprovadosHoje = BloobankWebhook::whereDate('created_at', $hoje)
-            ->get()
-            ->filter(fn ($webhook) => (json_decode($webhook->payload, true)['body']['status'] ?? null) === 'approved');
-
-        $valorAprovadosHoje = $aprovadosHoje->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
-        $qtdAprovadosHoje = $aprovadosHoje->count();
-
-        /**
-         * 📆 Total Pagos na Semana
-         */
-        $aprovadosSemana = BloobankWebhook::whereDate('created_at', '>=', $inicioSemana)
-            ->get()
-            ->filter(fn ($webhook) => (json_decode($webhook->payload, true)['body']['status'] ?? null) === 'approved');
-
-        $valorAprovadosSemana = $aprovadosSemana->sum(fn ($webhook) => json_decode($webhook->payload, true)['body']['amount']['value'] ?? 0);
-        $qtdAprovadosSemana = $aprovadosSemana->count();
-
-        /**
-         * 👤 Gerados por Vinicius (PixTransaction com user_id = 27)
-         */
-        $geradosViniciusHoje = PixTransaction::where('user_id', 27)
-            ->whereDate('created_at', $hoje)
-            ->get();
-
-        $valorGeradosVinicius = $geradosViniciusHoje->sum('amount');
-        $qtdGeradosVinicius = $geradosViniciusHoje->count();
-
-        /**
-         * ✅ Pagos por Vinicius HOJE (CashIn efetivado com status 'paid')
-         */
-        $pagosViniciusHoje = PixTransaction::where('user_id', 27)
-            ->where('status', 'paid')
-            ->whereDate('created_at', $hoje)
-            ->get();
-
-        $valorPagosVinicius = $pagosViniciusHoje->sum('amount');
-        $qtdPagosVinicius = $pagosViniciusHoje->count();
-
-        /**
-         * 🔁 Cards
-         */
         return [
-            Card::make('Pendentes Hoje', 'R$ ' . number_format($valorPendentesHoje / 100, 2, ',', '.'))
-                ->description($qtdPendentesHoje . ' transações pendentes')
+            Card::make('Pendentes Pluggou', 'R$ ' . number_format($valorPendentes / 100, 2, ',', '.'))
+                ->description($qtdPendentes . ' pendentes hoje')
                 ->color('warning'),
 
-            Card::make('Pagos Hoje', 'R$ ' . number_format($valorAprovadosHoje / 100, 2, ',', '.'))
-                ->description($qtdAprovadosHoje . ' transações aprovadas')
+            Card::make('Pagos Hoje', 'R$ ' . number_format($valorPagos / 100, 2, ',', '.'))
+                ->description($qtdPagos . ' pagos hoje')
                 ->color('success'),
-
-            Card::make('Pagos na Semana', 'R$ ' . number_format($valorAprovadosSemana / 100, 2, ',', '.'))
-                ->description($qtdAprovadosSemana . ' transações aprovadas')
-                ->color('primary'),
-
-            Card::make('Gerados Vinicius', 'R$ ' . number_format($valorGeradosVinicius / 100, 2, ',', '.'))
-                ->description($qtdGeradosVinicius . ' criados hoje')
-                ->color('gray'),
-
-            Card::make('Pagos Vinicius', 'R$ ' . number_format($valorPagosVinicius / 100, 2, ',', '.'))
-                ->description($qtdPagosVinicius . ' pagos hoje (Cash In)')
-                ->color('emerald'),
         ];
     }
 }
