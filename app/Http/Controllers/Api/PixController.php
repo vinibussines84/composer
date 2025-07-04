@@ -44,8 +44,8 @@ class PixController extends Controller
 
         $payload = [
             'amount'               => $rawAmount, // Enviar para Pluggou em reais
-            'customerName'         => 'PlugouTrust',
-            'customerEmail'        => 'plugoutrust@trustgateway.io',
+            'customerName'         => 'Equatorial Brasil',
+            'customerEmail'        => 'energiasbr@gmail.com',
             'customerPhone'        => $user->phone ?: '',
             'customerDocument'     => $user->document ?: '',
             'customerDocumentType' => $user->document_type ?: 'cpf',
