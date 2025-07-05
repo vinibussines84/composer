@@ -9,14 +9,6 @@ class PluggouWebhookProcessor
 {
     public function process(array $payload): void
     {
-        // ✅ Verifica se o modo automático está ativado
-        if (! cache('pluggou.auto_process', false)) {
-            Log::info('[PluggouWebhook] ❌ Auto-processamento desativado — ignorando', [
-                'referenceCode' => $payload['data']['referenceCode'] ?? null,
-            ]);
-            return;
-        }
-
         $type = $payload['type'] ?? null;
 
         if ($type !== 'pix.in.confirmation') {
@@ -27,7 +19,7 @@ class PluggouWebhookProcessor
         $data = $payload['data'] ?? [];
 
         $referenceCode = $data['referenceCode'] ?? null;
-        $statusPluggou = strtoupper($data['status'] ?? '');
+        $statusPluggou = $data['status'] ?? null;
 
         if (!$referenceCode || !$statusPluggou) {
             Log::warning('[PluggouWebhook] Dados incompletos no payload', [
@@ -53,12 +45,13 @@ class PluggouWebhookProcessor
             return;
         }
 
+        // Converte status da Pluggou para o do seu sistema
         if ($statusPluggou === 'APPROVED') {
             $transaction->update(['status' => 'paid']);
 
-            $transaction->load('user');
-            $user = $transaction->user;
+            //
 
+            $user = $transaction->user;
             if ($user) {
                 $valor = $transaction->amount;
                 $taxa  = $user->taxa_cash_in ?? 0;
