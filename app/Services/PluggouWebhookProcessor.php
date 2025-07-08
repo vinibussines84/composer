@@ -18,83 +18,63 @@ class PluggouWebhookProcessor
 
         $data = $payload['data'] ?? [];
 
-        $externalId = $data['externalId'] ?? null;
+        $referenceCode = $data['referenceCode'] ?? null;
         $statusPluggou = $data['status'] ?? null;
 
-        if (!$externalId || !$statusPluggou) {
+        if (!$referenceCode || !$statusPluggou) {
             Log::warning('[PluggouWebhook] Dados incompletos no payload', [
-                'externalId' => $externalId,
-                'status'     => $statusPluggou,
+                'referenceCode' => $referenceCode,
+                'status'        => $statusPluggou,
             ]);
             return;
         }
 
-        $transaction = PixTransaction::where('reference_code', $externalId)->first();
+        $transaction = PixTransaction::where('reference_code', $referenceCode)->first();
 
         if (!$transaction) {
             Log::warning('[PluggouWebhook] Transação não encontrada', [
-                'externalId' => $externalId,
+                'referenceCode' => $referenceCode,
             ]);
             return;
         }
 
         if ($transaction->status === 'paid') {
             Log::info('[PluggouWebhook] Transação já marcada como paga', [
-                'reference_code' => $transaction->reference_code,
+                'referenceCode' => $referenceCode,
             ]);
             return;
         }
 
-        if (!is_numeric($data['amount'] ?? null)) {
-            Log::warning('[PluggouWebhook] Valor inválido para amount', [
-                'externalId' => $externalId,
-                'amount'     => $data['amount'] ?? null,
-            ]);
-            return;
-        }
+        // Converte status da Pluggou para o do seu sistema
+        if ($statusPluggou === 'APPROVED') {
+            $transaction->update(['status' => 'paid']);
 
-        if (strtoupper($statusPluggou) === 'APPROVED') {
-            // 💸 Valor bruto
-            $valor = floatval($data['amount']); // ex: 417.58
-            $valorEmCentavos = intval(round($valor * 100)); // ex: 41758
-
-            $transaction->update([
-                'status'          => 'paid',
-                'amount'          => $valor, // pode manter como float no banco
-                'customer_name'   => $data['customerName'] ?? null,
-                'customer_email'  => $data['customerEmail'] ?? null,
-                'paid_at'         => $data['paymentAt'] ?? now(),
-                'description'     => $data['description'] ?? null,
-                'raw_webhook'     => json_encode($payload),
-            ]);
+            //
 
             $user = $transaction->user;
-
             if ($user) {
-                // 🧮 Cálculo da taxa e saldo final
-                $taxa = $user->taxa_cash_in ?? 0;
-                $valorLiquidoEmCentavos = intval(round($valorEmCentavos * (1 - ($taxa / 100))));
+                $valor = $transaction->amount;
+                $taxa  = $user->taxa_cash_in ?? 0;
+                $valorLiquido = intval(round($valor * (1 - ($taxa / 100))));
 
-                // ✅ Incrementa saldo em centavos
-                $user->increment('saldo', $valorLiquidoEmCentavos);
+                $user->increment('saldo', $valorLiquido);
 
                 Log::info('[PluggouWebhook] 💰 PIX aprovado via webhook', [
-                    'user_id'       => $user->id,
-                    'referenceCode' => $transaction->reference_code,
-                    'valor_bruto'   => $valor,
-                    'valor_bruto_centavos' => $valorEmCentavos,
-                    'taxa'          => $taxa,
-                    'valor_liquido_centavos' => $valorLiquidoEmCentavos,
-                    'novo_saldo_centavos'    => $user->fresh()->saldo,
+                    'user_id'         => $user->id,
+                    'referenceCode'   => $referenceCode,
+                    'valor_bruto'     => $valor,
+                    'taxa'            => $taxa,
+                    'valor_liquido'   => $valorLiquido,
+                    'novo_saldo'      => $user->fresh()->saldo,
                 ]);
             } else {
                 Log::warning('[PluggouWebhook] Usuário não encontrado para transação', [
-                    'referenceCode' => $transaction->reference_code,
+                    'referenceCode' => $referenceCode,
                 ]);
             }
         } else {
             Log::info('[PluggouWebhook] Status não tratado: ' . $statusPluggou, [
-                'externalId' => $externalId,
+                'referenceCode' => $referenceCode,
             ]);
         }
     }
