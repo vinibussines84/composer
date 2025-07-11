@@ -9,19 +9,19 @@
             title="Saldo Disponível" 
             value="R$ {{ number_format($disponivel, 2, ',', '.') }}"
             color="green"
-            icon="lucide-dollar-sign"
+            icon="dollar"
         />
         <x-dashboard.card 
             title="Bloqueado" 
             value="R$ {{ number_format($bloqueado, 2, ',', '.') }}"
             color="yellow"
-            icon="lucide-shield-alert"
+            icon="shield"
         />
         <x-dashboard.card 
             title="Taxas Arrecadadas" 
             value="R$ {{ number_format($totalTaxas, 2, ',', '.') }}"
             color="red"
-            icon="lucide-percent"
+            icon="percent"
         />
     </div>
 
