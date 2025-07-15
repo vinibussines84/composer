@@ -46,6 +46,8 @@ class AdminPanelProvider extends PanelProvider
                 BreezyCore::make(),
                 LightSwitchPlugin::make()->position(Alignment::BottomCenter),
             ])
+
+            //lsk
             ->brandLogo(asset('theme/img/trustgate2.png'))
             ->brandLogoHeight('3rem')
             ->colors([
